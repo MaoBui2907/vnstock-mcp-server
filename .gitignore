@@ -1,3 +1,4 @@
+# Python
 .py[cod]
 __pycache__/
 .mypy_cache/
@@ -5,3 +6,26 @@ __pycache__/
 .ruff_cache/
 .pdm-python
 .venv
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Coverage
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
