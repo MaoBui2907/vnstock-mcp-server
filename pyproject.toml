@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vnstock-mcp-server"
-version = "1.0.0"
+version = "1.0.1"
 description = "An MCP server exposing tools to access Vietnam stock market data built on top of vnstock and mcp"
 authors = [
     {name = "Mao Bui", email = "maonguyen199873@gmail.com"},
