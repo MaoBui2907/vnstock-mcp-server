@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import json
 from unittest.mock import patch, Mock
-from src.vnstock_mcp.server import (
+from src.vnstock_mcp.tools.company_tools import (
     get_company_overview,
     get_company_news,
     get_company_events,
@@ -13,7 +13,9 @@ from src.vnstock_mcp.server import (
     get_company_dividends,
     get_company_insider_deals,
     get_company_ratio_summary,
-    get_company_trading_stats
+    get_company_trading_stats,
+    list_all_icb_industries,
+    list_all_companies_with_details
 )
 
 
@@ -21,7 +23,7 @@ class TestCompanyTools:
     """Test suite for company-related tools"""
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_overview_json(self, mock_tcbs_class, sample_company_overview_data):
         """Test get_company_overview with JSON output"""
         # Setup mock
@@ -30,7 +32,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_overview('VCB', 'json')
+        result = get_company_overview('VCB', output_format='json')
         
         # Assertions
         mock_tcbs_class.assert_called_once_with(symbol='VCB')
@@ -44,7 +46,7 @@ class TestCompanyTools:
         assert parsed_result[0]['symbol'] == 'VCB'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_overview_dataframe(self, mock_tcbs_class, sample_company_overview_data):
         """Test get_company_overview with DataFrame output"""
         # Setup mock
@@ -53,7 +55,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_overview('VCB', 'dataframe')
+        result = get_company_overview('VCB', output_format='dataframe')
         
         # Assertions
         assert isinstance(result, pd.DataFrame)
@@ -61,7 +63,26 @@ class TestCompanyTools:
         assert result.iloc[0]['symbol'] == 'VCB'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
+    def test_get_company_overview_toon(self, mock_tcbs_class, sample_company_overview_data):
+        """Test get_company_overview with TOON output (default)"""
+        # Setup mock
+        mock_instance = Mock()
+        mock_instance.overview.return_value = sample_company_overview_data
+        mock_tcbs_class.return_value = mock_instance
+        
+        # Test - default output_format is 'toon'
+        result = get_company_overview('VCB')
+        
+        # Assertions
+        mock_tcbs_class.assert_called_once_with(symbol='VCB')
+        mock_instance.overview.assert_called_once()
+        
+        # TOON format returns a string
+        assert isinstance(result, str)
+
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_news(self, mock_tcbs_class, sample_company_news_data):
         """Test get_company_news"""
         # Setup mock
@@ -82,7 +103,7 @@ class TestCompanyTools:
         assert parsed_result[0]['title'] == 'VCB announces Q3 results'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_events(self, mock_tcbs_class, sample_company_events_data):
         """Test get_company_events"""
         # Setup mock
@@ -102,7 +123,7 @@ class TestCompanyTools:
         assert result.iloc[0]['event_type'] == 'AGM'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_shareholders(self, mock_tcbs_class, sample_shareholders_data):
         """Test get_company_shareholders"""
         # Setup mock
@@ -111,7 +132,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_shareholders('VCB', 'json')
+        result = get_company_shareholders('VCB', output_format='json')
         
         # Assertions
         mock_tcbs_class.assert_called_once_with(symbol='VCB')
@@ -122,7 +143,7 @@ class TestCompanyTools:
         assert parsed_result[0]['shareholder_name'] == 'State Bank of Vietnam'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_officers_working(self, mock_tcbs_class, sample_officers_data):
         """Test get_company_officers with working filter"""
         # Setup mock
@@ -131,7 +152,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_officers('VCB', 'working', 'dataframe')
+        result = get_company_officers('VCB', 'working', output_format='dataframe')
         
         # Assertions
         mock_tcbs_class.assert_called_once_with(symbol='VCB')
@@ -142,7 +163,7 @@ class TestCompanyTools:
         assert result.iloc[0]['name'] == 'John Doe'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_officers_all(self, mock_tcbs_class, sample_officers_data):
         """Test get_company_officers with all filter"""
         # Setup mock
@@ -151,7 +172,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_officers('VCB', 'all', 'json')
+        result = get_company_officers('VCB', 'all', output_format='json')
         
         # Assertions
         mock_instance.officers.assert_called_once_with(filter_by='all')
@@ -160,7 +181,7 @@ class TestCompanyTools:
         assert len(parsed_result) == 2
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_subsidiaries(self, mock_tcbs_class, sample_subsidiaries_data):
         """Test get_company_subsidiaries"""
         # Setup mock
@@ -169,7 +190,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_subsidiaries('VCB', 'subsidiary', 'json')
+        result = get_company_subsidiaries('VCB', 'subsidiary', output_format='json')
         
         # Assertions
         mock_tcbs_class.assert_called_once_with(symbol='VCB')
@@ -180,7 +201,7 @@ class TestCompanyTools:
         assert parsed_result[0]['subsidiary_name'] == 'VCB Securities'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCICompany')
+    @patch('src.vnstock_mcp.tools.company_tools.VCICompany')
     def test_get_company_reports(self, mock_vci_class):
         """Test get_company_reports"""
         # Setup mock
@@ -194,7 +215,7 @@ class TestCompanyTools:
         mock_vci_class.return_value = mock_instance
         
         # Test
-        result = get_company_reports('VCB', 'json')
+        result = get_company_reports('VCB', output_format='json')
         
         # Assertions
         mock_vci_class.assert_called_once_with(symbol='VCB')
@@ -205,7 +226,7 @@ class TestCompanyTools:
         assert parsed_result[0]['report_name'] == 'Annual Report 2023'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_dividends(self, mock_tcbs_class):
         """Test get_company_dividends"""
         # Setup mock
@@ -219,7 +240,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_dividends('VCB', 'dataframe')
+        result = get_company_dividends('VCB', output_format='dataframe')
         
         # Assertions
         mock_tcbs_class.assert_called_once_with(symbol='VCB')
@@ -230,7 +251,7 @@ class TestCompanyTools:
         assert result.iloc[0]['year'] == 2023
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.TCBSCompany')
+    @patch('src.vnstock_mcp.tools.company_tools.TCBSCompany')
     def test_get_company_insider_deals(self, mock_tcbs_class):
         """Test get_company_insider_deals"""
         # Setup mock
@@ -245,7 +266,7 @@ class TestCompanyTools:
         mock_tcbs_class.return_value = mock_instance
         
         # Test
-        result = get_company_insider_deals('VCB', 'json')
+        result = get_company_insider_deals('VCB', output_format='json')
         
         # Assertions
         mock_tcbs_class.assert_called_once_with(symbol='VCB')
@@ -256,7 +277,7 @@ class TestCompanyTools:
         assert parsed_result[0]['insider_name'] == 'John Doe'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCICompany')
+    @patch('src.vnstock_mcp.tools.company_tools.VCICompany')
     def test_get_company_ratio_summary(self, mock_vci_class):
         """Test get_company_ratio_summary"""
         # Setup mock
@@ -271,7 +292,7 @@ class TestCompanyTools:
         mock_vci_class.return_value = mock_instance
         
         # Test
-        result = get_company_ratio_summary('VCB', 'dataframe')
+        result = get_company_ratio_summary('VCB', output_format='dataframe')
         
         # Assertions
         mock_vci_class.assert_called_once_with(symbol='VCB')
@@ -282,7 +303,7 @@ class TestCompanyTools:
         assert result.iloc[0]['pe_ratio'] == 12.5
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCICompany')
+    @patch('src.vnstock_mcp.tools.company_tools.VCICompany')
     def test_get_company_trading_stats(self, mock_vci_class):
         """Test get_company_trading_stats"""
         # Setup mock
@@ -297,7 +318,7 @@ class TestCompanyTools:
         mock_vci_class.return_value = mock_instance
         
         # Test
-        result = get_company_trading_stats('VCB', 'json')
+        result = get_company_trading_stats('VCB', output_format='json')
         
         # Assertions
         mock_vci_class.assert_called_once_with(symbol='VCB')
@@ -310,25 +331,25 @@ class TestCompanyTools:
     @pytest.mark.unit
     def test_invalid_symbol_handling(self):
         """Test handling of invalid symbols"""
-        with patch('src.vnstock_mcp.server.TCBSCompany') as mock_tcbs_class:
+        with patch('src.vnstock_mcp.tools.company_tools.TCBSCompany') as mock_tcbs_class:
             mock_instance = Mock()
             mock_instance.overview.side_effect = Exception("Invalid symbol")
             mock_tcbs_class.return_value = mock_instance
             
             with pytest.raises(Exception):
-                get_company_overview('INVALID', 'json')
+                get_company_overview('INVALID', output_format='json')
 
     @pytest.mark.unit
     def test_default_parameters(self):
         """Test tools with default parameters"""
-        with patch('src.vnstock_mcp.server.TCBSCompany') as mock_tcbs_class:
+        with patch('src.vnstock_mcp.tools.company_tools.TCBSCompany') as mock_tcbs_class:
             mock_instance = Mock()
             mock_instance.overview.return_value = pd.DataFrame([{'symbol': 'VCB'}])
             mock_tcbs_class.return_value = mock_instance
             
-            # Test default output format (should be json)
+            # Test default output format (should be 'toon')
             result = get_company_overview('VCB')
-            assert isinstance(result, str)  # JSON string
+            assert isinstance(result, str)  # TOON string
             
             # Test default filter_by for officers
             mock_instance.officers.return_value = pd.DataFrame([{'name': 'Test'}])
@@ -338,14 +359,69 @@ class TestCompanyTools:
     @pytest.mark.unit
     def test_empty_dataframe_handling(self):
         """Test handling of empty DataFrames"""
-        with patch('src.vnstock_mcp.server.TCBSCompany') as mock_tcbs_class:
+        with patch('src.vnstock_mcp.tools.company_tools.TCBSCompany') as mock_tcbs_class:
             mock_instance = Mock()
             mock_instance.overview.return_value = pd.DataFrame()
             mock_tcbs_class.return_value = mock_instance
             
-            result = get_company_overview('VCB', 'json')
+            result = get_company_overview('VCB', output_format='json')
             assert result == '[]'  # Empty JSON array
             
-            result = get_company_overview('VCB', 'dataframe')
+            result = get_company_overview('VCB', output_format='dataframe')
             assert isinstance(result, pd.DataFrame)
             assert len(result) == 0
+
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.company_tools.VCIListing')
+    def test_list_all_icb_industries(self, mock_vci_listing_class):
+        """Test list_all_icb_industries"""
+        # Setup mock
+        mock_instance = Mock()
+        sample_icb = pd.DataFrame([{
+            'icb_code': '1000',
+            'icb_name': 'Technology',
+            'en_icb_name': 'Technology',
+            'level': 1
+        }])
+        mock_instance.industries_icb.return_value = sample_icb
+        mock_vci_listing_class.return_value = mock_instance
+        
+        # Test
+        result = list_all_icb_industries(output_format='json')
+        
+        # Assertions
+        mock_instance.industries_icb.assert_called_once()
+        parsed_result = json.loads(result)
+        assert len(parsed_result) == 1
+
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.company_tools.get_all_symbols_with_groups')
+    @patch('src.vnstock_mcp.tools.company_tools.VCIListing')
+    def test_list_all_companies_with_details(self, mock_vci_listing_class, mock_get_symbols):
+        """Test list_all_companies_with_details"""
+        # Setup mocks
+        mock_get_symbols.return_value = pd.DataFrame([
+            {'symbol': 'VCB', 'group': 'VN30'}
+        ])
+        
+        mock_instance = Mock()
+        mock_instance.symbols_by_industries.return_value = pd.DataFrame([{
+            'symbol': 'VCB',
+            'icb_code1': '1000',
+            'icb_code2': '1100',
+            'icb_code3': '1110',
+            'icb_code4': '1111'
+        }])
+        mock_instance.symbols_by_exchange.return_value = pd.DataFrame([{
+            'symbol': 'VCB',
+            'organ_name': 'Vietcombank',
+            'exchange': 'HOSE'
+        }])
+        mock_vci_listing_class.return_value = mock_instance
+        
+        # Test
+        result = list_all_companies_with_details(output_format='dataframe')
+        
+        # Assertions
+        assert isinstance(result, pd.DataFrame)
+        assert 'symbol' in result.columns

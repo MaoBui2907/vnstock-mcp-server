@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import json
 from unittest.mock import patch, Mock
-from src.vnstock_mcp.server import (
+from src.vnstock_mcp.tools.fund_tools import (
     list_all_funds,
     search_fund,
     get_fund_nav_report,
@@ -16,7 +16,7 @@ class TestFundTools:
     """Test suite for fund-related tools"""
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_list_all_funds_json(self, mock_fund_class, sample_fund_data):
         """Test list_all_funds with JSON output"""
         # Setup mock
@@ -25,7 +25,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = list_all_funds('STOCK', 'json')
+        result = list_all_funds('STOCK', output_format='json')
         
         # Assertions
         mock_fund_class.assert_called_once()
@@ -37,7 +37,7 @@ class TestFundTools:
         assert parsed_result[0]['symbol'] == 'VFMVN30'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_list_all_funds_dataframe(self, mock_fund_class, sample_fund_data):
         """Test list_all_funds with DataFrame output"""
         # Setup mock
@@ -46,7 +46,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = list_all_funds('BALANCED', 'dataframe')
+        result = list_all_funds('BALANCED', output_format='dataframe')
         
         # Assertions
         mock_instance.listing.assert_called_once_with(fund_type='BALANCED')
@@ -56,7 +56,22 @@ class TestFundTools:
         assert result.iloc[0]['symbol'] == 'VFMVN30'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
+    def test_list_all_funds_toon(self, mock_fund_class, sample_fund_data):
+        """Test list_all_funds with TOON output (default)"""
+        # Setup mock
+        mock_instance = Mock()
+        mock_instance.listing.return_value = sample_fund_data
+        mock_fund_class.return_value = mock_instance
+        
+        # Test - default output_format is 'toon'
+        result = list_all_funds('STOCK')
+        
+        # TOON format returns a string
+        assert isinstance(result, str)
+
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_list_all_funds_all_types(self, mock_fund_class, sample_fund_data):
         """Test list_all_funds with None fund_type (all types)"""
         # Setup mock
@@ -65,7 +80,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = list_all_funds(None, 'json')
+        result = list_all_funds(None, output_format='json')
         
         # Assertions
         mock_instance.listing.assert_called_once_with(fund_type=None)
@@ -74,7 +89,7 @@ class TestFundTools:
         assert len(parsed_result) == 2
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_search_fund_json(self, mock_fund_class, sample_fund_data):
         """Test search_fund with JSON output"""
         # Setup mock
@@ -83,7 +98,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = search_fund('VFM', 'json')
+        result = search_fund('VFM', output_format='json')
         
         # Assertions
         mock_fund_class.assert_called_once()
@@ -94,7 +109,7 @@ class TestFundTools:
         assert 'VFM' in parsed_result[0]['symbol']
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_search_fund_dataframe(self, mock_fund_class, sample_fund_data):
         """Test search_fund with DataFrame output"""
         # Setup mock
@@ -103,7 +118,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = search_fund('Dragon', 'dataframe')
+        result = search_fund('Dragon', output_format='dataframe')
         
         # Assertions
         mock_instance.filter.assert_called_once_with(symbol='Dragon')
@@ -112,7 +127,7 @@ class TestFundTools:
         assert len(result) == 2
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_get_fund_nav_report_json(self, mock_fund_class):
         """Test get_fund_nav_report with JSON output"""
         # Setup mock
@@ -138,7 +153,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = get_fund_nav_report('VFMVN30', 'json')
+        result = get_fund_nav_report('VFMVN30', output_format='json')
         
         # Assertions
         mock_fund_class.assert_called_once()
@@ -149,7 +164,7 @@ class TestFundTools:
         assert parsed_result[0]['nav'] == 25.5
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_get_fund_nav_report_dataframe(self, mock_fund_class):
         """Test get_fund_nav_report with DataFrame output"""
         # Setup mock
@@ -162,7 +177,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = get_fund_nav_report('VFMVN30', 'dataframe')
+        result = get_fund_nav_report('VFMVN30', output_format='dataframe')
         
         # Assertions
         assert isinstance(result, pd.DataFrame)
@@ -170,7 +185,7 @@ class TestFundTools:
         assert result.iloc[0]['nav'] == 25.5
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_get_fund_top_holding_json(self, mock_fund_class):
         """Test get_fund_top_holding with JSON output"""
         # Setup mock
@@ -196,7 +211,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = get_fund_top_holding('VFMVN30', 'json')
+        result = get_fund_top_holding('VFMVN30', output_format='json')
         
         # Assertions
         mock_fund_class.assert_called_once()
@@ -207,7 +222,7 @@ class TestFundTools:
         assert parsed_result[0]['symbol'] == 'VCB'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_get_fund_top_holding_dataframe(self, mock_fund_class):
         """Test get_fund_top_holding with DataFrame output"""
         # Setup mock
@@ -220,7 +235,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = get_fund_top_holding('VFMVN30', 'dataframe')
+        result = get_fund_top_holding('VFMVN30', output_format='dataframe')
         
         # Assertions
         assert isinstance(result, pd.DataFrame)
@@ -228,7 +243,7 @@ class TestFundTools:
         assert result.iloc[0]['symbol'] == 'VCB'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_get_fund_industry_holding_json(self, mock_fund_class):
         """Test get_fund_industry_holding with JSON output"""
         # Setup mock
@@ -252,7 +267,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = get_fund_industry_holding('VFMVN30', 'json')
+        result = get_fund_industry_holding('VFMVN30', output_format='json')
         
         # Assertions
         details_mock.industry_holding.assert_called_once_with(symbol='VFMVN30')
@@ -262,7 +277,7 @@ class TestFundTools:
         assert parsed_result[0]['industry'] == 'Banking'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_get_fund_asset_holding_json(self, mock_fund_class):
         """Test get_fund_asset_holding with JSON output"""
         # Setup mock
@@ -291,7 +306,7 @@ class TestFundTools:
         mock_fund_class.return_value = mock_instance
         
         # Test
-        result = get_fund_asset_holding('VFMVN30', 'json')
+        result = get_fund_asset_holding('VFMVN30', output_format='json')
         
         # Assertions
         details_mock.asset_holding.assert_called_once_with(symbol='VFMVN30')
@@ -303,20 +318,20 @@ class TestFundTools:
     @pytest.mark.unit
     def test_fund_tools_default_parameters(self):
         """Test fund tools with default parameters"""
-        with patch('src.vnstock_mcp.server.FMarketFund') as mock_fund_class:
+        with patch('src.vnstock_mcp.tools.fund_tools.FMarketFund') as mock_fund_class:
             mock_instance = Mock()
             mock_instance.listing.return_value = pd.DataFrame([{'symbol': 'TEST'}])
             mock_fund_class.return_value = mock_instance
             
-            # Test default fund_type (should be None) and output_format (should be 'json')
+            # Test default fund_type (should be None) and output_format (should be 'toon')
             result = list_all_funds()
             mock_instance.listing.assert_called_with(fund_type=None)
-            assert isinstance(result, str)  # JSON string
+            assert isinstance(result, str)  # TOON string
 
     @pytest.mark.unit
     def test_fund_tools_with_different_fund_types(self):
         """Test list_all_funds with different fund types"""
-        with patch('src.vnstock_mcp.server.FMarketFund') as mock_fund_class:
+        with patch('src.vnstock_mcp.tools.fund_tools.FMarketFund') as mock_fund_class:
             mock_instance = Mock()
             mock_instance.listing.return_value = pd.DataFrame([{'symbol': 'TEST'}])
             mock_fund_class.return_value = mock_instance
@@ -324,37 +339,37 @@ class TestFundTools:
             # Test different fund types
             fund_types = ['STOCK', 'BOND', 'BALANCED']
             for fund_type in fund_types:
-                result = list_all_funds(fund_type, 'json')
+                result = list_all_funds(fund_type, output_format='json')
                 mock_instance.listing.assert_called_with(fund_type=fund_type)
 
     @pytest.mark.unit
     def test_fund_tools_error_handling(self):
         """Test error handling in fund tools"""
-        with patch('src.vnstock_mcp.server.FMarketFund') as mock_fund_class:
+        with patch('src.vnstock_mcp.tools.fund_tools.FMarketFund') as mock_fund_class:
             mock_instance = Mock()
             mock_instance.listing.side_effect = Exception("API Error")
             mock_fund_class.return_value = mock_instance
             
             with pytest.raises(Exception):
-                list_all_funds('STOCK', 'json')
+                list_all_funds('STOCK', output_format='json')
 
     @pytest.mark.unit
     def test_fund_tools_empty_results(self):
         """Test fund tools with empty results"""
-        with patch('src.vnstock_mcp.server.FMarketFund') as mock_fund_class:
+        with patch('src.vnstock_mcp.tools.fund_tools.FMarketFund') as mock_fund_class:
             mock_instance = Mock()
             mock_instance.filter.return_value = pd.DataFrame()
             mock_fund_class.return_value = mock_instance
             
-            result = search_fund('NONEXISTENT', 'json')
+            result = search_fund('NONEXISTENT', output_format='json')
             assert result == '[]'
             
-            result = search_fund('NONEXISTENT', 'dataframe')
+            result = search_fund('NONEXISTENT', output_format='dataframe')
             assert isinstance(result, pd.DataFrame)
             assert len(result) == 0
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.FMarketFund')
+    @patch('src.vnstock_mcp.tools.fund_tools.FMarketFund')
     def test_fund_details_methods_consistency(self, mock_fund_class):
         """Test that all fund detail methods work consistently"""
         # Setup mock
@@ -373,10 +388,10 @@ class TestFundTools:
         symbol = 'VFMVN30'
         
         # Test all detail methods
-        nav_result = get_fund_nav_report(symbol, 'dataframe')
-        holding_result = get_fund_top_holding(symbol, 'dataframe')
-        industry_result = get_fund_industry_holding(symbol, 'dataframe')
-        asset_result = get_fund_asset_holding(symbol, 'dataframe')
+        nav_result = get_fund_nav_report(symbol, output_format='dataframe')
+        holding_result = get_fund_top_holding(symbol, output_format='dataframe')
+        industry_result = get_fund_industry_holding(symbol, output_format='dataframe')
+        asset_result = get_fund_asset_holding(symbol, output_format='dataframe')
         
         # All should be DataFrames
         assert isinstance(nav_result, pd.DataFrame)
@@ -393,7 +408,7 @@ class TestFundTools:
     @pytest.mark.unit
     def test_search_fund_keyword_handling(self):
         """Test search_fund with different keyword patterns"""
-        with patch('src.vnstock_mcp.server.FMarketFund') as mock_fund_class:
+        with patch('src.vnstock_mcp.tools.fund_tools.FMarketFund') as mock_fund_class:
             mock_instance = Mock()
             mock_instance.filter.return_value = pd.DataFrame([{'symbol': 'FOUND'}])
             mock_fund_class.return_value = mock_instance
@@ -401,7 +416,7 @@ class TestFundTools:
             # Test with different keywords
             keywords = ['VFM', 'dragon', 'DCDS', 'ETF']
             for keyword in keywords:
-                result = search_fund(keyword, 'json')
+                result = search_fund(keyword, output_format='json')
                 mock_instance.filter.assert_called_with(symbol=keyword)
                 
                 parsed_result = json.loads(result)

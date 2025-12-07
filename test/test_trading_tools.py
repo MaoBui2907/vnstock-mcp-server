@@ -2,14 +2,14 @@ import pytest
 import pandas as pd
 import json
 from unittest.mock import patch, Mock
-from src.vnstock_mcp.server import get_price_board
+from src.vnstock_mcp.tools.trading_tools import get_price_board
 
 
 class TestTradingTools:
     """Test suite for trading-related tools"""
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_json(self, mock_trading_class):
         """Test get_price_board with JSON output"""
         # Setup mock
@@ -46,7 +46,7 @@ class TestTradingTools:
         
         # Test
         symbols = ['VCB', 'VIC']
-        result = get_price_board(symbols, 'json')
+        result = get_price_board(symbols, output_format='json')
         
         # Assertions
         mock_trading_class.assert_called_once()
@@ -61,7 +61,7 @@ class TestTradingTools:
         assert parsed_result[1]['price'] == 85000
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_dataframe(self, mock_trading_class):
         """Test get_price_board with DataFrame output"""
         # Setup mock
@@ -86,7 +86,7 @@ class TestTradingTools:
         
         # Test
         symbols = ['VCB', 'HPG']
-        result = get_price_board(symbols, 'dataframe')
+        result = get_price_board(symbols, output_format='dataframe')
         
         # Assertions
         mock_trading_class.assert_called_once()
@@ -100,7 +100,24 @@ class TestTradingTools:
         assert result.iloc[1]['price'] == 45000
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
+    def test_get_price_board_toon(self, mock_trading_class):
+        """Test get_price_board with TOON output (default)"""
+        # Setup mock
+        price_board_data = pd.DataFrame([{'symbol': 'VCB', 'price': 100000}])
+        
+        mock_instance = Mock()
+        mock_instance.price_board.return_value = price_board_data
+        mock_trading_class.return_value = mock_instance
+        
+        # Test - default output_format is 'toon'
+        result = get_price_board(['VCB'])
+        
+        # TOON format returns a string
+        assert isinstance(result, str)
+
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_single_symbol(self, mock_trading_class):
         """Test get_price_board with single symbol"""
         # Setup mock
@@ -117,7 +134,7 @@ class TestTradingTools:
         
         # Test
         symbols = ['VNM']
-        result = get_price_board(symbols, 'json')
+        result = get_price_board(symbols, output_format='json')
         
         # Assertions
         mock_instance.price_board.assert_called_once_with(symbols_list=symbols)
@@ -127,7 +144,7 @@ class TestTradingTools:
         assert parsed_result[0]['symbol'] == 'VNM'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_multiple_symbols(self, mock_trading_class):
         """Test get_price_board with multiple symbols"""
         # Setup mock
@@ -145,7 +162,7 @@ class TestTradingTools:
         
         # Test
         symbols = ['VCB', 'VIC', 'VNM', 'HPG', 'MSN']
-        result = get_price_board(symbols, 'dataframe')
+        result = get_price_board(symbols, output_format='dataframe')
         
         # Assertions
         mock_instance.price_board.assert_called_once_with(symbols_list=symbols)
@@ -161,56 +178,56 @@ class TestTradingTools:
     @pytest.mark.unit
     def test_get_price_board_default_parameters(self):
         """Test get_price_board with default parameters"""
-        with patch('src.vnstock_mcp.server.VCITrading') as mock_trading_class:
+        with patch('src.vnstock_mcp.tools.trading_tools.VCITrading') as mock_trading_class:
             mock_instance = Mock()
             mock_instance.price_board.return_value = pd.DataFrame([{'symbol': 'VCB', 'price': 100000}])
             mock_trading_class.return_value = mock_instance
             
-            # Test default output_format (should be 'json')
+            # Test default output_format (should be 'toon')
             result = get_price_board(['VCB'])
-            assert isinstance(result, str)  # JSON string
+            assert isinstance(result, str)  # TOON string
 
     @pytest.mark.unit
     def test_get_price_board_error_handling(self):
         """Test error handling in get_price_board"""
-        with patch('src.vnstock_mcp.server.VCITrading') as mock_trading_class:
+        with patch('src.vnstock_mcp.tools.trading_tools.VCITrading') as mock_trading_class:
             mock_instance = Mock()
             mock_instance.price_board.side_effect = Exception("API Error")
             mock_trading_class.return_value = mock_instance
             
             with pytest.raises(Exception):
-                get_price_board(['VCB'], 'json')
+                get_price_board(['VCB'], output_format='json')
 
     @pytest.mark.unit
     def test_get_price_board_empty_symbols_list(self):
         """Test get_price_board with empty symbols list"""
-        with patch('src.vnstock_mcp.server.VCITrading') as mock_trading_class:
+        with patch('src.vnstock_mcp.tools.trading_tools.VCITrading') as mock_trading_class:
             mock_instance = Mock()
             mock_instance.price_board.return_value = pd.DataFrame()
             mock_trading_class.return_value = mock_instance
             
-            result = get_price_board([], 'json')
+            result = get_price_board([], output_format='json')
             mock_instance.price_board.assert_called_once_with(symbols_list=[])
             assert result == '[]'
             
-            result = get_price_board([], 'dataframe')
+            result = get_price_board([], output_format='dataframe')
             assert isinstance(result, pd.DataFrame)
             assert len(result) == 0
 
     @pytest.mark.unit
     def test_get_price_board_invalid_symbols(self):
         """Test get_price_board with invalid symbols"""
-        with patch('src.vnstock_mcp.server.VCITrading') as mock_trading_class:
+        with patch('src.vnstock_mcp.tools.trading_tools.VCITrading') as mock_trading_class:
             mock_instance = Mock()
             # Return empty DataFrame for invalid symbols
             mock_instance.price_board.return_value = pd.DataFrame()
             mock_trading_class.return_value = mock_instance
             
-            result = get_price_board(['INVALID1', 'INVALID2'], 'json')
+            result = get_price_board(['INVALID1', 'INVALID2'], output_format='json')
             assert result == '[]'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_mixed_valid_invalid_symbols(self, mock_trading_class):
         """Test get_price_board with mix of valid and invalid symbols"""
         # Setup mock to return data only for valid symbols
@@ -227,7 +244,7 @@ class TestTradingTools:
         
         # Test
         symbols = ['VCB', 'INVALID']
-        result = get_price_board(symbols, 'json')
+        result = get_price_board(symbols, output_format='json')
         
         # Assertions
         mock_instance.price_board.assert_called_once_with(symbols_list=symbols)
@@ -238,7 +255,7 @@ class TestTradingTools:
         assert parsed_result[0]['symbol'] == 'VCB'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_vci_trading_initialization(self, mock_trading_class):
         """Test VCITrading class initialization"""
         # Setup mock
@@ -247,13 +264,13 @@ class TestTradingTools:
         mock_trading_class.return_value = mock_instance
         
         # Test
-        result = get_price_board(['VCB'], 'json')
+        result = get_price_board(['VCB'], output_format='json')
         
         # Assertions
         mock_trading_class.assert_called_once_with()  # No parameters expected
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_comprehensive_data_structure(self, mock_trading_class):
         """Test get_price_board with comprehensive price board data structure"""
         # Setup mock with realistic price board data
@@ -285,7 +302,7 @@ class TestTradingTools:
         mock_trading_class.return_value = mock_instance
         
         # Test
-        result = get_price_board(['VCB'], 'json')
+        result = get_price_board(['VCB'], output_format='json')
         
         # Assertions
         parsed_result = json.loads(result)
@@ -301,7 +318,7 @@ class TestTradingTools:
         assert data['floor_price'] == 89100
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_output_format_consistency(self, mock_trading_class):
         """Test output format consistency in get_price_board"""
         # Setup mock
@@ -317,13 +334,13 @@ class TestTradingTools:
         symbols = ['VCB', 'VIC']
         
         # Test JSON format
-        json_result = get_price_board(symbols, 'json')
+        json_result = get_price_board(symbols, output_format='json')
         assert isinstance(json_result, str)
         parsed_json = json.loads(json_result)
         assert len(parsed_json) == 2
         
         # Test DataFrame format
-        df_result = get_price_board(symbols, 'dataframe')
+        df_result = get_price_board(symbols, output_format='dataframe')
         assert isinstance(df_result, pd.DataFrame)
         assert len(df_result) == 2
         
@@ -332,7 +349,7 @@ class TestTradingTools:
         assert parsed_json[1]['symbol'] == df_result.iloc[1]['symbol']
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_large_symbols_list(self, mock_trading_class):
         """Test get_price_board with large list of symbols"""
         # Setup mock
@@ -347,7 +364,7 @@ class TestTradingTools:
         mock_trading_class.return_value = mock_instance
         
         # Test
-        result = get_price_board(large_symbol_list, 'dataframe')
+        result = get_price_board(large_symbol_list, output_format='dataframe')
         
         # Assertions
         mock_instance.price_board.assert_called_once_with(symbols_list=large_symbol_list)
@@ -360,7 +377,7 @@ class TestTradingTools:
         assert result.iloc[-1]['symbol'] == 'SYM099'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.VCITrading')
+    @patch('src.vnstock_mcp.tools.trading_tools.VCITrading')
     def test_get_price_board_common_vn_symbols(self, mock_trading_class):
         """Test get_price_board with common Vietnamese stock symbols"""
         # Setup mock
@@ -375,7 +392,7 @@ class TestTradingTools:
         mock_trading_class.return_value = mock_instance
         
         # Test
-        result = get_price_board(vn_symbols, 'json')
+        result = get_price_board(vn_symbols, output_format='json')
         
         # Assertions
         parsed_result = json.loads(result)

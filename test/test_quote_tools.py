@@ -3,7 +3,7 @@ import pandas as pd
 import json
 from unittest.mock import patch, Mock
 from datetime import datetime
-from src.vnstock_mcp.server import (
+from src.vnstock_mcp.tools.quote_tools import (
     get_quote_history_price,
     get_quote_intraday_price,
     get_quote_price_depth
@@ -14,8 +14,8 @@ class TestQuoteTools:
     """Test suite for quote-related tools"""
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
-    @patch('src.vnstock_mcp.server.datetime')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.datetime')
     def test_get_quote_history_price_json(self, mock_datetime, mock_quote_class, sample_quote_history_data):
         """Test get_quote_history_price with JSON output"""
         # Setup mocks
@@ -25,7 +25,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_history_price('VCB', '2024-01-01', None, '1D', 'json')
+        result = get_quote_history_price('VCB', '2024-01-01', None, '1D', output_format='json')
         
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
@@ -42,7 +42,7 @@ class TestQuoteTools:
         assert parsed_result[0]['close'] == 103.0
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_get_quote_history_price_with_end_date(self, mock_quote_class, sample_quote_history_data):
         """Test get_quote_history_price with specific end date"""
         # Setup mock
@@ -51,7 +51,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1H', 'dataframe')
+        result = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1H', output_format='dataframe')
         
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
@@ -66,7 +66,22 @@ class TestQuoteTools:
         assert result.iloc[0]['time'] == '2024-01-01'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    def test_get_quote_history_price_toon(self, mock_quote_class, sample_quote_history_data):
+        """Test get_quote_history_price with TOON output (default)"""
+        # Setup mock
+        mock_instance = Mock()
+        mock_instance.history.return_value = sample_quote_history_data
+        mock_quote_class.return_value = mock_instance
+        
+        # Test - default output_format is 'toon'
+        result = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D')
+        
+        # TOON format returns a string
+        assert isinstance(result, str)
+
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_get_quote_history_price_different_intervals(self, mock_quote_class, sample_quote_history_data):
         """Test get_quote_history_price with different intervals"""
         # Setup mock
@@ -77,7 +92,7 @@ class TestQuoteTools:
         intervals = ['1m', '5m', '15m', '30m', '1H', '1D', '1W', '1M']
         
         for interval in intervals:
-            result = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', interval, 'json')
+            result = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', interval, output_format='json')
             mock_instance.history.assert_called_with(
                 start_date='2024-01-01',
                 end_date='2024-01-31',
@@ -85,7 +100,7 @@ class TestQuoteTools:
             )
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_get_quote_intraday_price_json(self, mock_quote_class):
         """Test get_quote_intraday_price with JSON output"""
         # Setup mock
@@ -109,7 +124,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_intraday_price('VCB', 500, None, 'json')
+        result = get_quote_intraday_price('VCB', 500, None, output_format='json')
         
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
@@ -121,7 +136,7 @@ class TestQuoteTools:
         assert parsed_result[0]['price'] == 100.5
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_get_quote_intraday_price_with_last_time(self, mock_quote_class):
         """Test get_quote_intraday_price with last_time parameter"""
         # Setup mock
@@ -132,7 +147,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_intraday_price('VCB', 100, '09:00:00', 'dataframe')
+        result = get_quote_intraday_price('VCB', 100, '09:00:00', output_format='dataframe')
         
         # Assertions
         mock_instance.intraday.assert_called_once_with(page_size=100, last_time='09:00:00')
@@ -142,7 +157,7 @@ class TestQuoteTools:
         assert result.iloc[0]['time'] == '09:15:00'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_get_quote_price_depth_json(self, mock_quote_class):
         """Test get_quote_price_depth with JSON output"""
         # Setup mock
@@ -164,7 +179,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_price_depth('VCB', 'json')
+        result = get_quote_price_depth('VCB', output_format='json')
         
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
@@ -176,7 +191,7 @@ class TestQuoteTools:
         assert parsed_result[0]['ask_price_1'] == 100.5
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_get_quote_price_depth_dataframe(self, mock_quote_class):
         """Test get_quote_price_depth with DataFrame output"""
         # Setup mock
@@ -190,7 +205,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_price_depth('VCB', 'dataframe')
+        result = get_quote_price_depth('VCB', output_format='dataframe')
         
         # Assertions
         assert isinstance(result, pd.DataFrame)
@@ -200,8 +215,8 @@ class TestQuoteTools:
     @pytest.mark.unit
     def test_quote_tools_default_parameters(self):
         """Test quote tools with default parameters"""
-        with patch('src.vnstock_mcp.server.Quote') as mock_quote_class, \
-             patch('src.vnstock_mcp.server.datetime') as mock_datetime:
+        with patch('src.vnstock_mcp.tools.quote_tools.Quote') as mock_quote_class, \
+             patch('src.vnstock_mcp.tools.quote_tools.datetime') as mock_datetime:
             
             mock_datetime.now.return_value.strftime.return_value = '2024-01-31'
             mock_instance = Mock()
@@ -210,52 +225,52 @@ class TestQuoteTools:
             mock_instance.price_depth.return_value = pd.DataFrame([{'bid_price': 100}])
             mock_quote_class.return_value = mock_instance
             
-            # Test default interval (should be '1D') and output_format (should be 'json')
+            # Test default interval (should be '1D') and output_format (should be 'toon')
             result = get_quote_history_price('VCB', '2024-01-01')
             mock_instance.history.assert_called_with(
                 start_date='2024-01-01',
                 end_date='2024-01-31',
                 interval='1D'
             )
-            assert isinstance(result, str)  # JSON string
+            assert isinstance(result, str)  # TOON string
             
-            # Test default page_size (should be 100) and output_format (should be 'json')
+            # Test default page_size (should be 100) and output_format (should be 'toon')
             result = get_quote_intraday_price('VCB')
             mock_instance.intraday.assert_called_with(page_size=100, last_time=None)
-            assert isinstance(result, str)  # JSON string
+            assert isinstance(result, str)  # TOON string
             
-            # Test default output_format (should be 'json')
+            # Test default output_format (should be 'toon')
             result = get_quote_price_depth('VCB')
-            assert isinstance(result, str)  # JSON string
+            assert isinstance(result, str)  # TOON string
 
     @pytest.mark.unit
     def test_quote_tools_error_handling(self):
         """Test error handling in quote tools"""
-        with patch('src.vnstock_mcp.server.Quote') as mock_quote_class:
+        with patch('src.vnstock_mcp.tools.quote_tools.Quote') as mock_quote_class:
             mock_instance = Mock()
             mock_instance.history.side_effect = Exception("Invalid symbol")
             mock_quote_class.return_value = mock_instance
             
             with pytest.raises(Exception):
-                get_quote_history_price('INVALID', '2024-01-01', '2024-01-31', '1D', 'json')
+                get_quote_history_price('INVALID', '2024-01-01', '2024-01-31', '1D', output_format='json')
 
     @pytest.mark.unit
     def test_quote_tools_empty_results(self):
         """Test quote tools with empty results"""
-        with patch('src.vnstock_mcp.server.Quote') as mock_quote_class:
+        with patch('src.vnstock_mcp.tools.quote_tools.Quote') as mock_quote_class:
             mock_instance = Mock()
             mock_instance.intraday.return_value = pd.DataFrame()
             mock_quote_class.return_value = mock_instance
             
-            result = get_quote_intraday_price('VCB', 100, None, 'json')
+            result = get_quote_intraday_price('VCB', 100, None, output_format='json')
             assert result == '[]'
             
-            result = get_quote_intraday_price('VCB', 100, None, 'dataframe')
+            result = get_quote_intraday_price('VCB', 100, None, output_format='dataframe')
             assert isinstance(result, pd.DataFrame)
             assert len(result) == 0
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_class_initialization_consistency(self, mock_quote_class):
         """Test that all quote tools initialize Quote class consistently"""
         # Setup mock
@@ -268,9 +283,9 @@ class TestQuoteTools:
         symbol = 'VCB'
         
         # Test all quote tools
-        get_quote_history_price(symbol, '2024-01-01', '2024-01-31', '1D', 'dataframe')
-        get_quote_intraday_price(symbol, 100, None, 'dataframe')
-        get_quote_price_depth(symbol, 'dataframe')
+        get_quote_history_price(symbol, '2024-01-01', '2024-01-31', '1D', output_format='dataframe')
+        get_quote_intraday_price(symbol, 100, None, output_format='dataframe')
+        get_quote_price_depth(symbol, output_format='dataframe')
         
         # All should initialize Quote with same symbol and source='VCI'
         assert mock_quote_class.call_count == 3
@@ -279,7 +294,7 @@ class TestQuoteTools:
             assert call[1]['source'] == 'VCI'
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_history_price_page_size_parameter(self, mock_quote_class):
         """Test that get_quote_intraday_price handles different page sizes correctly"""
         # Setup mock
@@ -290,12 +305,12 @@ class TestQuoteTools:
         # Test different page sizes
         page_sizes = [50, 100, 500, 1000]
         for page_size in page_sizes:
-            result = get_quote_intraday_price('VCB', page_size, None, 'json')
+            result = get_quote_intraday_price('VCB', page_size, None, output_format='json')
             mock_instance.intraday.assert_called_with(page_size=page_size, last_time=None)
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
-    @patch('src.vnstock_mcp.server.datetime')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.datetime')
     def test_quote_history_end_date_handling(self, mock_datetime, mock_quote_class):
         """Test end_date handling in get_quote_history_price"""
         # Setup mocks
@@ -305,7 +320,7 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test with None end_date (should use current date)
-        result = get_quote_history_price('VCB', '2024-01-01', None, '1D', 'json')
+        result = get_quote_history_price('VCB', '2024-01-01', None, '1D', output_format='json')
         mock_datetime.now.assert_called_once()
         mock_instance.history.assert_called_with(
             start_date='2024-01-01',
@@ -318,7 +333,7 @@ class TestQuoteTools:
         mock_instance.reset_mock()
         
         # Test with specific end_date (should not call datetime.now)
-        result = get_quote_history_price('VCB', '2024-01-01', '2024-01-15', '1D', 'json')
+        result = get_quote_history_price('VCB', '2024-01-01', '2024-01-15', '1D', output_format='json')
         mock_datetime.now.assert_not_called()
         mock_instance.history.assert_called_with(
             start_date='2024-01-01',
@@ -327,7 +342,7 @@ class TestQuoteTools:
         )
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_tools_with_different_symbols(self, mock_quote_class):
         """Test quote tools with different stock symbols"""
         # Setup mock
@@ -341,9 +356,9 @@ class TestQuoteTools:
         
         for symbol in symbols:
             # Test each tool with different symbols
-            get_quote_history_price(symbol, '2024-01-01', '2024-01-31', '1D', 'json')
-            get_quote_intraday_price(symbol, 100, None, 'json')
-            get_quote_price_depth(symbol, 'json')
+            get_quote_history_price(symbol, '2024-01-01', '2024-01-31', '1D', output_format='json')
+            get_quote_intraday_price(symbol, 100, None, output_format='json')
+            get_quote_price_depth(symbol, output_format='json')
             
             # Verify Quote class was initialized with correct symbol
             calls = mock_quote_class.call_args_list[-3:]  # Last 3 calls
@@ -353,24 +368,24 @@ class TestQuoteTools:
     @pytest.mark.unit
     def test_quote_intraday_last_time_parameter_handling(self):
         """Test last_time parameter handling in get_quote_intraday_price"""
-        with patch('src.vnstock_mcp.server.Quote') as mock_quote_class:
+        with patch('src.vnstock_mcp.tools.quote_tools.Quote') as mock_quote_class:
             mock_instance = Mock()
             mock_instance.intraday.return_value = pd.DataFrame([{'time': '09:00:00'}])
             mock_quote_class.return_value = mock_instance
             
             # Test with None last_time
-            result = get_quote_intraday_price('VCB', 100, None, 'json')
+            result = get_quote_intraday_price('VCB', 100, None, output_format='json')
             mock_instance.intraday.assert_called_with(page_size=100, last_time=None)
             
             # Reset mock
             mock_instance.reset_mock()
             
             # Test with specific last_time
-            result = get_quote_intraday_price('VCB', 100, '09:00:00', 'json')
+            result = get_quote_intraday_price('VCB', 100, '09:00:00', output_format='json')
             mock_instance.intraday.assert_called_with(page_size=100, last_time='09:00:00')
 
     @pytest.mark.unit
-    @patch('src.vnstock_mcp.server.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_tools_output_format_consistency(self, mock_quote_class):
         """Test output format consistency across all quote tools"""
         # Setup mock
@@ -381,18 +396,18 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test JSON format
-        history_json = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D', 'json')
-        intraday_json = get_quote_intraday_price('VCB', 100, None, 'json')
-        depth_json = get_quote_price_depth('VCB', 'json')
+        history_json = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D', output_format='json')
+        intraday_json = get_quote_intraday_price('VCB', 100, None, output_format='json')
+        depth_json = get_quote_price_depth('VCB', output_format='json')
         
         assert isinstance(history_json, str)
         assert isinstance(intraday_json, str)
         assert isinstance(depth_json, str)
         
         # Test DataFrame format
-        history_df = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D', 'dataframe')
-        intraday_df = get_quote_intraday_price('VCB', 100, None, 'dataframe')
-        depth_df = get_quote_price_depth('VCB', 'dataframe')
+        history_df = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D', output_format='dataframe')
+        intraday_df = get_quote_intraday_price('VCB', 100, None, output_format='dataframe')
+        depth_df = get_quote_price_depth('VCB', output_format='dataframe')
         
         assert isinstance(history_df, pd.DataFrame)
         assert isinstance(intraday_df, pd.DataFrame)

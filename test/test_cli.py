@@ -13,9 +13,10 @@ class TestCLI:
         mock_server.run = MagicMock()
         
         with patch.object(sys, 'argv', ['vnstock-mcp-server']):
-            main()
+            with patch('builtins.print'):
+                main()
         
-        mock_server.run.assert_called_once_with(transport='stdio', mount_path=None)
+        mock_server.run.assert_called_once_with(transport='stdio')
     
     @patch('vnstock_mcp.server.server')
     def test_main_stdio_transport(self, mock_server):
@@ -23,9 +24,10 @@ class TestCLI:
         mock_server.run = MagicMock()
         
         with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'stdio']):
-            main()
+            with patch('builtins.print'):
+                main()
         
-        mock_server.run.assert_called_once_with(transport='stdio', mount_path=None)
+        mock_server.run.assert_called_once_with(transport='stdio')
     
     @patch('vnstock_mcp.server.server')
     def test_main_sse_transport(self, mock_server):
@@ -33,25 +35,31 @@ class TestCLI:
         mock_server.run = MagicMock()
         
         with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'sse']):
-            with patch('builtins.print') as mock_print:
+            with patch('builtins.print'):
                 main()
         
-        mock_server.run.assert_called_once_with(transport='sse', mount_path=None)
-        # Check warning message was printed
-        mock_print.assert_any_call(
-            "Warning: Using SSE transport without mount-path. Default mount path will be used.",
-            file=sys.stderr
+        mock_server.run.assert_called_once_with(
+            transport='sse',
+            host='0.0.0.0',
+            port=8000,
+            path=None
         )
     
     @patch('vnstock_mcp.server.server')
-    def test_main_sse_transport_with_mount_path(self, mock_server):
-        """Test main function with SSE transport and mount path."""
+    def test_main_sse_transport_with_path(self, mock_server):
+        """Test main function with SSE transport and path."""
         mock_server.run = MagicMock()
         
-        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'sse', '--mount-path', '/vnstock']):
-            main()
+        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'sse', '--path', '/vnstock']):
+            with patch('builtins.print'):
+                main()
         
-        mock_server.run.assert_called_once_with(transport='sse', mount_path='/vnstock')
+        mock_server.run.assert_called_once_with(
+            transport='sse',
+            host='0.0.0.0',
+            port=8000,
+            path='/vnstock'
+        )
     
     @patch('vnstock_mcp.server.server')
     def test_main_streamable_http_transport(self, mock_server):
@@ -59,40 +67,62 @@ class TestCLI:
         mock_server.run = MagicMock()
         
         with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'streamable-http']):
-            main()
-        
-        mock_server.run.assert_called_once_with(transport='streamable-http', mount_path=None)
-    
-    @patch('vnstock_mcp.server.server')
-    def test_main_mount_path_warning_with_stdio(self, mock_server):
-        """Test warning when mount-path is used with stdio transport."""
-        mock_server.run = MagicMock()
-        
-        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'stdio', '--mount-path', '/test']):
-            with patch('builtins.print') as mock_print:
+            with patch('builtins.print'):
                 main()
         
-        mock_server.run.assert_called_once_with(transport='stdio', mount_path='/test')
-        # Check warning message was printed
-        mock_print.assert_any_call(
-            "Warning: --mount-path is only used with SSE transport. Ignoring mount-path.",
-            file=sys.stderr
+        mock_server.run.assert_called_once_with(
+            transport='streamable-http',
+            host='0.0.0.0',
+            port=8000,
+            path=None
         )
     
     @patch('vnstock_mcp.server.server')
-    def test_main_mount_path_warning_with_streamable_http(self, mock_server):
-        """Test warning when mount-path is used with streamable-http transport."""
+    def test_main_custom_host_and_port(self, mock_server):
+        """Test main function with custom host and port."""
         mock_server.run = MagicMock()
         
-        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'streamable-http', '--mount-path', '/test']):
-            with patch('builtins.print') as mock_print:
+        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'sse', '--host', '127.0.0.1', '--port', '9000']):
+            with patch('builtins.print'):
                 main()
         
-        mock_server.run.assert_called_once_with(transport='streamable-http', mount_path='/test')
-        # Check warning message was printed
-        mock_print.assert_any_call(
-            "Warning: --mount-path is only used with SSE transport. Ignoring mount-path.",
-            file=sys.stderr
+        mock_server.run.assert_called_once_with(
+            transport='sse',
+            host='127.0.0.1',
+            port=9000,
+            path=None
+        )
+    
+    @patch('vnstock_mcp.server.server')
+    def test_main_short_transport_argument(self, mock_server):
+        """Test main function with short transport argument."""
+        mock_server.run = MagicMock()
+        
+        with patch.object(sys, 'argv', ['vnstock-mcp-server', '-t', 'sse']):
+            with patch('builtins.print'):
+                main()
+        
+        mock_server.run.assert_called_once_with(
+            transport='sse',
+            host='0.0.0.0',
+            port=8000,
+            path=None
+        )
+    
+    @patch('vnstock_mcp.server.server')
+    def test_main_short_port_argument(self, mock_server):
+        """Test main function with short port argument."""
+        mock_server.run = MagicMock()
+        
+        with patch.object(sys, 'argv', ['vnstock-mcp-server', '-t', 'sse', '-p', '3000']):
+            with patch('builtins.print'):
+                main()
+        
+        mock_server.run.assert_called_once_with(
+            transport='sse',
+            host='0.0.0.0',
+            port=3000,
+            path=None
         )
     
     def test_main_help_argument(self):
@@ -142,22 +172,27 @@ class TestCLI:
         assert exc_info.value.code == 1
         mock_print.assert_any_call("Error starting server: Test error", file=sys.stderr)
     
-    @patch('vnstock_mcp.server.server')
-    def test_main_short_arguments(self, mock_server):
-        """Test short argument forms."""
+    @patch('vnstock_mcp.server.server')  
+    def test_main_prints_startup_messages_stdio(self, mock_server):
+        """Test that startup messages are printed to stderr for stdio."""
         mock_server.run = MagicMock()
         
-        with patch.object(sys, 'argv', ['vnstock-mcp-server', '-t', 'sse', '-m', '/vnstock']):
-            main()
+        with patch.object(sys, 'argv', ['vnstock-mcp-server']):
+            with patch('builtins.print') as mock_print:
+                main()
         
-        mock_server.run.assert_called_once_with(transport='sse', mount_path='/vnstock')
+        # Check startup messages
+        mock_print.assert_any_call(
+            "Starting VNStock MCP Server with stdio transport...",
+            file=sys.stderr
+        )
     
     @patch('vnstock_mcp.server.server')  
-    def test_main_prints_startup_messages(self, mock_server):
-        """Test that startup messages are printed to stderr."""
+    def test_main_prints_startup_messages_sse(self, mock_server):
+        """Test that startup messages are printed to stderr for SSE."""
         mock_server.run = MagicMock()
         
-        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'sse', '--mount-path', '/vnstock']):
+        with patch.object(sys, 'argv', ['vnstock-mcp-server', '--transport', 'sse', '--path', '/vnstock']):
             with patch('builtins.print') as mock_print:
                 main()
         
@@ -167,6 +202,32 @@ class TestCLI:
             file=sys.stderr
         )
         mock_print.assert_any_call(
-            "SSE mount path: /vnstock",
+            "Server running on http://0.0.0.0:8000",
             file=sys.stderr
+        )
+        mock_print.assert_any_call(
+            "Endpoint path: /vnstock",
+            file=sys.stderr
+        )
+    
+    @patch('vnstock_mcp.server.server')
+    def test_main_all_parameters(self, mock_server):
+        """Test main function with all parameters."""
+        mock_server.run = MagicMock()
+        
+        with patch.object(sys, 'argv', [
+            'vnstock-mcp-server',
+            '--transport', 'sse',
+            '--host', '192.168.1.1',
+            '--port', '5000',
+            '--path', '/api/mcp'
+        ]):
+            with patch('builtins.print'):
+                main()
+        
+        mock_server.run.assert_called_once_with(
+            transport='sse',
+            host='192.168.1.1',
+            port=5000,
+            path='/api/mcp'
         )

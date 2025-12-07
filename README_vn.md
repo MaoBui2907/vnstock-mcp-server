@@ -72,8 +72,8 @@ vnstock-mcp-server --transport stdio
 # Sử dụng Server-Sent Events (SSE) transport cho ứng dụng web
 vnstock-mcp-server --transport sse
 
-# Sử dụng SSE với mount path tùy chỉnh
-vnstock-mcp-server --transport sse --mount-path /vnstock
+# Sử dụng SSE với endpoint path tùy chỉnh
+vnstock-mcp-server --transport sse --path /mcp
 
 # Sử dụng HTTP streaming transport
 vnstock-mcp-server --transport streamable-http
@@ -100,14 +100,14 @@ VNStock MCP Server hỗ trợ ba giao thức transport khác nhau để phù h�
 ### SSE (Server-Sent Events)
 - **Trường hợp sử dụng**: Ứng dụng web cần streaming dữ liệu theo thời gian thực
 - **Giao thức**: Server-sent events dựa trên HTTP
-- **Sử dụng**: `vnstock-mcp-server --transport sse [--mount-path /path]`
+- **Sử dụng**: `vnstock-mcp-server --transport sse [--path /mcp] [--host 0.0.0.0] [--port 8000]`
 - **Server chạy trên**: `http://127.0.0.1:8000` (mặc định)
 - **Tốt nhất cho**: Dashboard web, ứng dụng dựa trên trình duyệt
 
 ### streamable-http
 - **Trường hợp sử dụng**: Tích hợp dựa trên HTTP và dịch vụ API
 - **Giao thức**: HTTP streaming với JSON-RPC over HTTP
-- **Sử dụng**: `vnstock-mcp-server --transport streamable-http`
+- **Sử dụng**: `vnstock-mcp-server --transport streamable-http [--path /mcp] [--host 0.0.0.0] [--port 8000]`
 - **Server chạy trên**: `http://127.0.0.1:8000` (mặc định)
 - **Tốt nhất cho**: Tích hợp REST API, kiến trúc microservices
 
@@ -118,10 +118,11 @@ vnstock-mcp-server [OPTIONS]
 Tùy chọn:
   -t, --transport {stdio,sse,streamable-http}
                         Giao thức transport sử dụng (mặc định: stdio)
-  -m, --mount-path MOUNT_PATH
-                        Mount path cho SSE transport (tùy chọn)
+  --path PATH           Endpoint path cho HTTP transports (tùy chọn, vd: /mcp)
+  --host HOST           Địa chỉ host để bind (mặc định: 0.0.0.0)
+  -p, --port PORT       Port để chạy server (mặc định: 8000)
   -v, --version         Hiển thị thông tin phiên bản
-  -h, --help           Hiển thị thông báo trợ giúp
+  -h, --help            Hiển thị thông báo trợ giúp
 ```
 
 ## Tích hợp MCP client
@@ -153,8 +154,10 @@ Thêm một server entry trong cấu hình MCP của bạn:
         "vnstock-mcp-server",
         "--transport",
         "sse",
-        "--mount-path",
-        "/vnstock"
+        "--path",
+        "/mcp",
+        "--port",
+        "8000"
       ]
     },
     "vnstock-http": {
@@ -304,7 +307,7 @@ Vui lòng xem xét:
 
 ### Vấn đề chế độ Transport
 - **SSE transport không hoạt động**:
-  - Đảm bảo mount-path được chỉ định đúng nếu cần
+  - Đảm bảo path được chỉ định đúng nếu cần
   - Kiểm tra server logs để biết lỗi khởi động
   - Xác minh web client có thể kết nối tới SSE endpoint
 - **Chọn sai chế độ transport**:
@@ -333,9 +336,14 @@ Giấy phép MIT - xem file [LICENSE](LICENSE) để biết chi tiết.
 
 ## Nhật ký thay đổi
 
-### v1.1.0 (Phát triển hiện tại)
+### v1.0.2 (Mới nhất)
+- **MỚI**: Thêm hỗ trợ TOON (python-toon) để tăng cường chức năng
+- **CẢI TIẾN**: Tách các MCP tools thành các file riêng biệt để tổ chức code tốt hơn
+- **SỬA LỖI**: Khắc phục vấn đề kết nối SSE transport
+
+### v1.0.1
 - **MỚI**: Thêm hỗ trợ cho nhiều chế độ transport (stdio, sse, streamable-http)
-- **MỚI**: Tham số dòng lệnh để lựa chọn transport (`--transport`, `--mount-path`)
+- **MỚI**: Tham số dòng lệnh để lựa chọn transport (`--transport`, `--path`, `--host`, `--port`)
 - **MỚI**: SSE (Server-Sent Events) transport cho ứng dụng web
 - **MỚI**: HTTP streaming transport cho tích hợp API
 - **CẢI TIẾN**: CLI nâng cao với thông báo trợ giúp và xác thực

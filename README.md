@@ -72,8 +72,8 @@ vnstock-mcp-server --transport stdio
 # Use Server-Sent Events (SSE) transport for web applications
 vnstock-mcp-server --transport sse
 
-# Use SSE with custom mount path
-vnstock-mcp-server --transport sse --mount-path /vnstock
+# Use SSE with custom endpoint path
+vnstock-mcp-server --transport sse --path /mcp
 
 # Use HTTP streaming transport
 vnstock-mcp-server --transport streamable-http
@@ -100,14 +100,14 @@ The VNStock MCP Server supports three different transport protocols to accommoda
 ### SSE (Server-Sent Events)
 - **Use case**: Web applications that need real-time data streaming
 - **Protocol**: HTTP-based server-sent events
-- **Usage**: `vnstock-mcp-server --transport sse [--mount-path /path]`
+- **Usage**: `vnstock-mcp-server --transport sse [--path /mcp] [--host 0.0.0.0] [--port 8000]`
 - **Server runs on**: `http://127.0.0.1:8000` (default)
 - **Best for**: Web dashboards, browser-based applications
 
 ### streamable-http
 - **Use case**: HTTP-based integrations and API services
 - **Protocol**: HTTP streaming with JSON-RPC over HTTP
-- **Usage**: `vnstock-mcp-server --transport streamable-http`
+- **Usage**: `vnstock-mcp-server --transport streamable-http [--path /mcp] [--host 0.0.0.0] [--port 8000]`
 - **Server runs on**: `http://127.0.0.1:8000` (default)
 - **Best for**: REST API integrations, microservices architecture
 
@@ -118,10 +118,11 @@ vnstock-mcp-server [OPTIONS]
 Options:
   -t, --transport {stdio,sse,streamable-http}
                         Transport protocol to use (default: stdio)
-  -m, --mount-path MOUNT_PATH
-                        Mount path for SSE transport (optional)
+  --path PATH           Endpoint path for HTTP transports (optional, e.g. /mcp)
+  --host HOST           Host address to bind to (default: 0.0.0.0)
+  -p, --port PORT       Port to run the server on (default: 8000)
   -v, --version         Show version information
-  -h, --help           Show help message
+  -h, --help            Show help message
 ```
 
 ## MCP client integration
@@ -153,8 +154,10 @@ Add a server entry in your MCP configuration:
         "vnstock-mcp-server",
         "--transport",
         "sse",
-        "--mount-path",
-        "/vnstock"
+        "--path",
+        "/mcp",
+        "--port",
+        "8000"
       ]
     },
     "vnstock-http": {
@@ -304,7 +307,7 @@ This is an unofficial wrapper and is not affiliated with the vnstock library or 
 
 ### Transport Mode Issues
 - **SSE transport not working**:
-  - Ensure mount-path is correctly specified if needed
+  - Ensure path is correctly specified if needed
   - Check server logs for startup errors
   - Verify web client can connect to the SSE endpoint
 - **Wrong transport mode selected**:
@@ -333,9 +336,14 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Changelog
 
-### v1.1.0 (Current Development)
+### v1.0.2 (Latest)
+- **NEW**: Added TOON (python-toon) support for enhanced functionality
+- **IMPROVED**: Separated MCP tools into individual files for better code organization
+- **FIXED**: SSE transport connection issues
+
+### v1.0.1
 - **NEW**: Added support for multiple transport modes (stdio, sse, streamable-http)
-- **NEW**: Command line arguments for transport selection (`--transport`, `--mount-path`)
+- **NEW**: Command line arguments for transport selection (`--transport`, `--path`, `--host`, `--port`)
 - **NEW**: SSE (Server-Sent Events) transport for web applications
 - **NEW**: HTTP streaming transport for API integrations
 - **IMPROVED**: Enhanced CLI with help messages and validation
