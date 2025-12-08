@@ -48,7 +48,7 @@ uv sync
 ```
 
 ## Yêu cầu
-- Python 3.10+
+- Python 3.12+
 - uv (cài đặt với `pip install uv` hoặc xem `https://docs.astral.sh/uv/`)
 
 ## Bắt đầu nhanh
@@ -336,7 +336,15 @@ Giấy phép MIT - xem file [LICENSE](LICENSE) để biết chi tiết.
 
 ## Nhật ký thay đổi
 
-### v1.0.2 (Mới nhất)
+### v1.0.3 (Mới nhất)
+- **MỚI**: Thêm hỗ trợ Technical Analysis (TA) Momentum Indicators qua thư viện `pandas-ta`
+- **MỚI**: 40+ momentum indicators bao gồm RSI, MACD, Stochastic, CCI, Williams %R, ADX và nhiều hơn nữa
+- **MỚI**: Hàm `add_indicator()` để thêm indicator động với khả năng phân tích chuỗi
+- **MỚI**: `get_available_indicators()` và `get_indicator_info()` để khám phá các indicators
+- **MỚI**: Hỗ trợ tham số indicator tùy chỉnh qua chuỗi hoặc kwargs
+- **CẢI TIẾN**: Nâng cao quote tools với phân tích TA momentum tích hợp
+
+### v1.0.2
 - **MỚI**: Thêm hỗ trợ TOON (python-toon) để tăng cường chức năng
 - **CẢI TIẾN**: Tách các MCP tools thành các file riêng biệt để tổ chức code tốt hơn
 - **SỬA LỖI**: Khắc phục vấn đề kết nối SSE transport
