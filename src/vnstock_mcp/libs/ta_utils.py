@@ -487,7 +487,7 @@ def add_rate_of_change(data: pd.DataFrame, window: int = 10, scalar: float = 100
     Returns:
         pd.DataFrame
     """
-    result = data.ta.roc(length=window)
+    result = data.ta.roc(length=window, scalar=scalar)
     return _merge_indicator_result(data, result)
 
 

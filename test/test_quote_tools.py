@@ -6,7 +6,10 @@ from datetime import datetime
 from src.vnstock_mcp.tools.quote_tools import (
     get_quote_history_price,
     get_quote_intraday_price,
-    get_quote_price_depth
+    get_quote_price_depth,
+    get_quote_price_with_indicators,
+    _get_available_indicators_detailed,
+    _list_available_indicators
 )
 
 
@@ -30,8 +33,8 @@ class TestQuoteTools:
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
         mock_instance.history.assert_called_once_with(
-            start_date='2024-01-01',
-            end_date='2024-01-31',
+            start='2024-01-01',
+            end='2024-01-31',
             interval='1D'
         )
         
@@ -56,8 +59,8 @@ class TestQuoteTools:
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
         mock_instance.history.assert_called_once_with(
-            start_date='2024-01-01',
-            end_date='2024-01-31',
+            start='2024-01-01',
+            end='2024-01-31',
             interval='1H'
         )
         
@@ -94,8 +97,8 @@ class TestQuoteTools:
         for interval in intervals:
             result = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', interval, output_format='json')
             mock_instance.history.assert_called_with(
-                start_date='2024-01-01',
-                end_date='2024-01-31',
+                start='2024-01-01',
+                end='2024-01-31',
                 interval=interval
             )
 
@@ -124,11 +127,11 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_intraday_price('VCB', 500, None, output_format='json')
+        result = get_quote_intraday_price('VCB', 500, 1, output_format='json')
         
         # Assertions
         mock_quote_class.assert_called_once_with(symbol='VCB', source='VCI')
-        mock_instance.intraday.assert_called_once_with(page_size=500, last_time=None)
+        mock_instance.intraday.assert_called_once_with(page_size=500, page=1)
         
         parsed_result = json.loads(result)
         assert len(parsed_result) == 2
@@ -147,10 +150,10 @@ class TestQuoteTools:
         mock_quote_class.return_value = mock_instance
         
         # Test
-        result = get_quote_intraday_price('VCB', 100, '09:00:00', output_format='dataframe')
+        result = get_quote_intraday_price('VCB', 100, 2, output_format='dataframe')
         
         # Assertions
-        mock_instance.intraday.assert_called_once_with(page_size=100, last_time='09:00:00')
+        mock_instance.intraday.assert_called_once_with(page_size=100, page=2)
         
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
@@ -228,15 +231,15 @@ class TestQuoteTools:
             # Test default interval (should be '1D') and output_format (should be 'toon')
             result = get_quote_history_price('VCB', '2024-01-01')
             mock_instance.history.assert_called_with(
-                start_date='2024-01-01',
-                end_date='2024-01-31',
+                start='2024-01-01',
+                end='2024-01-31',
                 interval='1D'
             )
             assert isinstance(result, str)  # TOON string
             
             # Test default page_size (should be 100) and output_format (should be 'toon')
             result = get_quote_intraday_price('VCB')
-            mock_instance.intraday.assert_called_with(page_size=100, last_time=None)
+            mock_instance.intraday.assert_called_with(page_size=100, page=1)
             assert isinstance(result, str)  # TOON string
             
             # Test default output_format (should be 'toon')
@@ -262,10 +265,10 @@ class TestQuoteTools:
             mock_instance.intraday.return_value = pd.DataFrame()
             mock_quote_class.return_value = mock_instance
             
-            result = get_quote_intraday_price('VCB', 100, None, output_format='json')
+            result = get_quote_intraday_price('VCB', 100, 1, output_format='json')
             assert result == '[]'
             
-            result = get_quote_intraday_price('VCB', 100, None, output_format='dataframe')
+            result = get_quote_intraday_price('VCB', 100, 1, output_format='dataframe')
             assert isinstance(result, pd.DataFrame)
             assert len(result) == 0
 
@@ -305,8 +308,8 @@ class TestQuoteTools:
         # Test different page sizes
         page_sizes = [50, 100, 500, 1000]
         for page_size in page_sizes:
-            result = get_quote_intraday_price('VCB', page_size, None, output_format='json')
-            mock_instance.intraday.assert_called_with(page_size=page_size, last_time=None)
+            result = get_quote_intraday_price('VCB', page_size, 1, output_format='json')
+            mock_instance.intraday.assert_called_with(page_size=page_size, page=1)
 
     @pytest.mark.unit
     @patch('src.vnstock_mcp.tools.quote_tools.Quote')
@@ -323,8 +326,8 @@ class TestQuoteTools:
         result = get_quote_history_price('VCB', '2024-01-01', None, '1D', output_format='json')
         mock_datetime.now.assert_called_once()
         mock_instance.history.assert_called_with(
-            start_date='2024-01-01',
-            end_date='2024-01-31',
+            start='2024-01-01',
+            end='2024-01-31',
             interval='1D'
         )
         
@@ -336,8 +339,8 @@ class TestQuoteTools:
         result = get_quote_history_price('VCB', '2024-01-01', '2024-01-15', '1D', output_format='json')
         mock_datetime.now.assert_not_called()
         mock_instance.history.assert_called_with(
-            start_date='2024-01-01',
-            end_date='2024-01-15',
+            start='2024-01-01',
+            end='2024-01-15',
             interval='1D'
         )
 
@@ -357,7 +360,7 @@ class TestQuoteTools:
         for symbol in symbols:
             # Test each tool with different symbols
             get_quote_history_price(symbol, '2024-01-01', '2024-01-31', '1D', output_format='json')
-            get_quote_intraday_price(symbol, 100, None, output_format='json')
+            get_quote_intraday_price(symbol, 100, 1, output_format='json')
             get_quote_price_depth(symbol, output_format='json')
             
             # Verify Quote class was initialized with correct symbol
@@ -374,15 +377,15 @@ class TestQuoteTools:
             mock_quote_class.return_value = mock_instance
             
             # Test with None last_time
-            result = get_quote_intraday_price('VCB', 100, None, output_format='json')
-            mock_instance.intraday.assert_called_with(page_size=100, last_time=None)
+            result = get_quote_intraday_price('VCB', 100, 1, output_format='json')
+            mock_instance.intraday.assert_called_with(page_size=100, page=1)
             
             # Reset mock
             mock_instance.reset_mock()
             
             # Test with specific last_time
-            result = get_quote_intraday_price('VCB', 100, '09:00:00', output_format='json')
-            mock_instance.intraday.assert_called_with(page_size=100, last_time='09:00:00')
+            result = get_quote_intraday_price('VCB', 100, 2, output_format='json')
+            mock_instance.intraday.assert_called_with(page_size=100, page=2)
 
     @pytest.mark.unit
     @patch('src.vnstock_mcp.tools.quote_tools.Quote')
@@ -397,7 +400,7 @@ class TestQuoteTools:
         
         # Test JSON format
         history_json = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D', output_format='json')
-        intraday_json = get_quote_intraday_price('VCB', 100, None, output_format='json')
+        intraday_json = get_quote_intraday_price('VCB', 100, 1, output_format='json')
         depth_json = get_quote_price_depth('VCB', output_format='json')
         
         assert isinstance(history_json, str)
@@ -406,9 +409,176 @@ class TestQuoteTools:
         
         # Test DataFrame format
         history_df = get_quote_history_price('VCB', '2024-01-01', '2024-01-31', '1D', output_format='dataframe')
-        intraday_df = get_quote_intraday_price('VCB', 100, None, output_format='dataframe')
+        intraday_df = get_quote_intraday_price('VCB', 100, 1, output_format='dataframe')
         depth_df = get_quote_price_depth('VCB', output_format='dataframe')
         
         assert isinstance(history_df, pd.DataFrame)
         assert isinstance(intraday_df, pd.DataFrame)
         assert isinstance(depth_df, pd.DataFrame)
+
+
+class TestQuotePriceWithIndicators:
+    """Test suite for get_quote_price_with_indicators"""
+    
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    @patch('src.vnstock_mcp.tools.quote_tools.datetime')
+    def test_get_quote_price_with_indicators_single(self, mock_datetime, mock_quote_class):
+        """Test get_quote_price_with_indicators with single indicator"""
+        import numpy as np
+        
+        # Setup mocks
+        mock_datetime.now.return_value.strftime.return_value = '2024-01-31'
+        
+        # Create OHLCV data that works with pandas_ta
+        np.random.seed(42)
+        n = 50
+        close = 100 + np.cumsum(np.random.randn(n) * 2)
+        ohlcv_data = pd.DataFrame({
+            'time': pd.date_range('2024-01-01', periods=n),
+            'open': close + np.random.randn(n),
+            'high': close + np.abs(np.random.randn(n)),
+            'low': close - np.abs(np.random.randn(n)),
+            'close': close,
+            'volume': np.random.randint(100000, 1000000, n).astype(float)
+        })
+        
+        mock_instance = Mock()
+        mock_instance.history.return_value = ohlcv_data
+        mock_quote_class.return_value = mock_instance
+        
+        # Test with RSI
+        result = get_quote_price_with_indicators(
+            'VCB', ['rsi'], '2024-01-01', None, '1D', 
+            output_format='dataframe'
+        )
+        
+        assert isinstance(result, pd.DataFrame)
+        assert 'RSI' in result.columns
+        mock_quote_class.assert_called_with(symbol='VCB', source='VCI')
+    
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    def test_get_quote_price_with_indicators_multiple(self, mock_quote_class):
+        """Test get_quote_price_with_indicators with multiple indicators"""
+        import numpy as np
+        
+        # Create OHLCV data
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.randn(n) * 2)
+        ohlcv_data = pd.DataFrame({
+            'time': pd.date_range('2024-01-01', periods=n),
+            'open': close + np.random.randn(n),
+            'high': close + np.abs(np.random.randn(n)),
+            'low': close - np.abs(np.random.randn(n)),
+            'close': close,
+            'volume': np.random.randint(100000, 1000000, n).astype(float)
+        })
+        
+        mock_instance = Mock()
+        mock_instance.history.return_value = ohlcv_data
+        mock_quote_class.return_value = mock_instance
+        
+        # Test with multiple indicators
+        result = get_quote_price_with_indicators(
+            'VCB', ['rsi', 'macd'], '2024-01-01', '2024-03-31', '1D',
+            output_format='dataframe'
+        )
+        
+        assert isinstance(result, pd.DataFrame)
+        assert 'RSI' in result.columns
+        assert 'MACD' in result.columns
+    
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    def test_get_quote_price_with_indicators_with_params(self, mock_quote_class):
+        """Test get_quote_price_with_indicators with indicator parameters"""
+        import numpy as np
+        
+        # Create OHLCV data
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.randn(n) * 2)
+        ohlcv_data = pd.DataFrame({
+            'time': pd.date_range('2024-01-01', periods=n),
+            'open': close + np.random.randn(n),
+            'high': close + np.abs(np.random.randn(n)),
+            'low': close - np.abs(np.random.randn(n)),
+            'close': close,
+            'volume': np.random.randint(100000, 1000000, n).astype(float)
+        })
+        
+        mock_instance = Mock()
+        mock_instance.history.return_value = ohlcv_data
+        mock_quote_class.return_value = mock_instance
+        
+        # Test with indicator with custom parameters
+        result = get_quote_price_with_indicators(
+            'VCB', ['rsi(window=21)'], '2024-01-01', '2024-03-31', '1D',
+            output_format='dataframe'
+        )
+        
+        assert isinstance(result, pd.DataFrame)
+        assert 'RSI' in result.columns
+    
+    @pytest.mark.unit
+    @patch('src.vnstock_mcp.tools.quote_tools.Quote')
+    def test_get_quote_price_with_indicators_json_output(self, mock_quote_class):
+        """Test get_quote_price_with_indicators with JSON output"""
+        import numpy as np
+        
+        # Create OHLCV data
+        np.random.seed(42)
+        n = 50
+        close = 100 + np.cumsum(np.random.randn(n) * 2)
+        ohlcv_data = pd.DataFrame({
+            'time': pd.date_range('2024-01-01', periods=n),
+            'open': close + np.random.randn(n),
+            'high': close + np.abs(np.random.randn(n)),
+            'low': close - np.abs(np.random.randn(n)),
+            'close': close,
+            'volume': np.random.randint(100000, 1000000, n).astype(float)
+        })
+        
+        mock_instance = Mock()
+        mock_instance.history.return_value = ohlcv_data
+        mock_quote_class.return_value = mock_instance
+        
+        result = get_quote_price_with_indicators(
+            'VCB', ['rsi'], '2024-01-01', '2024-02-01', '1D',
+            output_format='json'
+        )
+        
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, list)
+
+
+class TestIndicatorHelpers:
+    """Test suite for indicator helper functions"""
+    
+    @pytest.mark.unit
+    def test_get_available_indicators_detailed(self):
+        """Test _get_available_indicators_detailed function"""
+        result = _get_available_indicators_detailed()
+        
+        assert isinstance(result, list)
+        assert len(result) > 0
+        
+        # Each indicator should have detailed info
+        for ind in result:
+            assert isinstance(ind, dict)
+            assert 'name' in ind
+            assert 'description' in ind
+            assert 'parameters' in ind
+    
+    @pytest.mark.unit
+    def test_list_available_indicators(self):
+        """Test _list_available_indicators function"""
+        result = _list_available_indicators()
+        
+        assert isinstance(result, list)
+        assert len(result) > 0
+        assert 'rsi' in result
+        assert 'macd' in result
