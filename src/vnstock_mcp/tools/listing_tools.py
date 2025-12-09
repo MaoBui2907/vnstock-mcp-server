@@ -84,18 +84,6 @@ def get_all_symbol_groups():
     ])
     return df
 
-
-@with_output_format
-def get_all_industries():
-    """
-    Get all symbols from stock market
-    Returns:
-        pd.DataFrame or json
-    """
-    listing = VCIListing()
-    return listing.industries_icb()
-
-
 @with_output_format
 def get_all_symbols_by_group(group: str):
     """
@@ -158,7 +146,6 @@ def get_all_symbols_detailed():
 
 # Register all functions as MCP tools
 listing_mcp.tool(get_all_symbol_groups)
-listing_mcp.tool(get_all_industries)
 listing_mcp.tool(get_all_symbols_by_group)
 listing_mcp.tool(get_all_symbols_by_industry)
 listing_mcp.tool(get_all_symbols)

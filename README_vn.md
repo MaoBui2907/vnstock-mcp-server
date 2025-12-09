@@ -336,7 +336,17 @@ Giấy phép MIT - xem file [LICENSE](LICENSE) để biết chi tiết.
 
 ## Nhật ký thay đổi
 
-### v1.0.3 (Mới nhất)
+### v1.0.4 (Mới nhất)
+- **MỚI**: Thêm Technical Analysis (TA) Trend Indicators - 15+ trend indicators bao gồm ADX, Aroon, Ichimoku, Parabolic SAR, SuperTrend, PSAR và nhiều hơn nữa
+- **MỚI**: Thêm Technical Analysis (TA) Volume Indicators - 15+ volume indicators bao gồm OBV, AD, CMF, MFI, VWMA và nhiều hơn nữa
+- **MỚI**: Kiến trúc TA module hóa với các module riêng cho Momentum, Trend và Volume indicators
+- **MỚI**: Các hàm tiện ích core trong `ta_core.py` để trích xuất metadata và merge kết quả indicators
+- **CẢI TIẾN**: Docstrings toàn diện với tài liệu `Output columns` chính xác cho tất cả indicators
+- **CẢI TIẾN**: Registry indicator thống nhất kết hợp tất cả các loại indicators
+- **CẢI TIẾN**: Phạm vi test coverage tốt hơn với file test riêng cho từng loại indicator
+- **SỬA LỖI**: Sửa các test thất bại trong quote tools liên quan đến yêu cầu dữ liệu OHLCV
+
+### v1.0.3
 - **MỚI**: Thêm hỗ trợ Technical Analysis (TA) Momentum Indicators qua thư viện `pandas-ta`
 - **MỚI**: 40+ momentum indicators bao gồm RSI, MACD, Stochastic, CCI, Williams %R, ADX và nhiều hơn nữa
 - **MỚI**: Hàm `add_indicator()` để thêm indicator động với khả năng phân tích chuỗi

@@ -4,7 +4,6 @@ import json
 from unittest.mock import patch, Mock
 from src.vnstock_mcp.tools.listing_tools import (
     get_all_symbol_groups,
-    get_all_industries,
     get_all_symbols_by_group,
     get_all_symbols_by_industry,
     get_all_symbols,
@@ -53,44 +52,6 @@ class TestListingTools:
         
         # TOON format returns a string
         assert isinstance(result, str)
-
-    @pytest.mark.unit
-    @patch('src.vnstock_mcp.tools.listing_tools.VCIListing')
-    def test_get_all_industries_json(self, mock_vci_listing_class, sample_industries_data):
-        """Test get_all_industries with JSON output"""
-        # Setup mock
-        mock_instance = Mock()
-        mock_instance.industries_icb.return_value = sample_industries_data
-        mock_vci_listing_class.return_value = mock_instance
-        
-        # Test
-        result = get_all_industries(output_format='json')
-        
-        # Assertions
-        mock_vci_listing_class.assert_called_once()
-        mock_instance.industries_icb.assert_called_once()
-        
-        parsed_result = json.loads(result)
-        assert isinstance(parsed_result, list)
-        assert len(parsed_result) == 2
-        assert parsed_result[0]['icb_name1'] == 'Technology'
-
-    @pytest.mark.unit
-    @patch('src.vnstock_mcp.tools.listing_tools.VCIListing')
-    def test_get_all_industries_dataframe(self, mock_vci_listing_class, sample_industries_data):
-        """Test get_all_industries with DataFrame output"""
-        # Setup mock
-        mock_instance = Mock()
-        mock_instance.industries_icb.return_value = sample_industries_data
-        mock_vci_listing_class.return_value = mock_instance
-        
-        # Test
-        result = get_all_industries(output_format='dataframe')
-        
-        # Assertions
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 2
-        assert result.iloc[0]['icb_name1'] == 'Technology'
 
     @pytest.mark.unit
     @patch('src.vnstock_mcp.tools.listing_tools.VCIListing')
@@ -323,19 +284,3 @@ class TestListingTools:
         
         # Should return TOON by default
         assert isinstance(result, str)
-
-    @pytest.mark.unit
-    def test_listing_tools_default_output_format(self):
-        """Test listing tools with default output format"""
-        # Test get_all_symbol_groups default (should be 'toon')
-        result = get_all_symbol_groups()
-        assert isinstance(result, str)  # TOON string
-        
-        with patch('src.vnstock_mcp.tools.listing_tools.VCIListing') as mock_vci_listing_class:
-            mock_instance = Mock()
-            mock_instance.industries_icb.return_value = pd.DataFrame([{'test': 'data'}])
-            mock_vci_listing_class.return_value = mock_instance
-            
-            # Test other tools default output format (should be 'toon')
-            result = get_all_industries()
-            assert isinstance(result, str)  # TOON string

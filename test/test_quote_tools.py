@@ -223,7 +223,10 @@ class TestQuoteTools:
             
             mock_datetime.now.return_value.strftime.return_value = '2024-01-31'
             mock_instance = Mock()
-            mock_instance.history.return_value = pd.DataFrame([{'time': '2024-01-01', 'close': 100}])
+            # Mock data must include all OHLC columns and volume for drop_market_close logic
+            mock_instance.history.return_value = pd.DataFrame([{
+                'time': '2024-01-01', 'open': 99, 'high': 101, 'low': 98, 'close': 100, 'volume': 1000
+            }])
             mock_instance.intraday.return_value = pd.DataFrame([{'time': '09:00:00', 'price': 100}])
             mock_instance.price_depth.return_value = pd.DataFrame([{'bid_price': 100}])
             mock_quote_class.return_value = mock_instance
@@ -276,9 +279,11 @@ class TestQuoteTools:
     @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_class_initialization_consistency(self, mock_quote_class):
         """Test that all quote tools initialize Quote class consistently"""
-        # Setup mock
+        # Setup mock - must include all OHLC columns and volume for drop_market_close logic
         mock_instance = Mock()
-        mock_instance.history.return_value = pd.DataFrame([{'time': '2024-01-01'}])
+        mock_instance.history.return_value = pd.DataFrame([{
+            'time': '2024-01-01', 'open': 99, 'high': 101, 'low': 98, 'close': 100, 'volume': 1000
+        }])
         mock_instance.intraday.return_value = pd.DataFrame([{'time': '09:00:00'}])
         mock_instance.price_depth.return_value = pd.DataFrame([{'bid_price': 100}])
         mock_quote_class.return_value = mock_instance
@@ -316,10 +321,12 @@ class TestQuoteTools:
     @patch('src.vnstock_mcp.tools.quote_tools.datetime')
     def test_quote_history_end_date_handling(self, mock_datetime, mock_quote_class):
         """Test end_date handling in get_quote_history_price"""
-        # Setup mocks
+        # Setup mocks - must include all OHLC columns and volume for drop_market_close logic
         mock_datetime.now.return_value.strftime.return_value = '2024-01-31'
         mock_instance = Mock()
-        mock_instance.history.return_value = pd.DataFrame([{'time': '2024-01-01'}])
+        mock_instance.history.return_value = pd.DataFrame([{
+            'time': '2024-01-01', 'open': 99, 'high': 101, 'low': 98, 'close': 100, 'volume': 1000
+        }])
         mock_quote_class.return_value = mock_instance
         
         # Test with None end_date (should use current date)
@@ -348,9 +355,11 @@ class TestQuoteTools:
     @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_tools_with_different_symbols(self, mock_quote_class):
         """Test quote tools with different stock symbols"""
-        # Setup mock
+        # Setup mock - must include all OHLC columns and volume for drop_market_close logic
         mock_instance = Mock()
-        mock_instance.history.return_value = pd.DataFrame([{'time': '2024-01-01'}])
+        mock_instance.history.return_value = pd.DataFrame([{
+            'time': '2024-01-01', 'open': 99, 'high': 101, 'low': 98, 'close': 100, 'volume': 1000
+        }])
         mock_instance.intraday.return_value = pd.DataFrame([{'time': '09:00:00'}])
         mock_instance.price_depth.return_value = pd.DataFrame([{'bid_price': 100}])
         mock_quote_class.return_value = mock_instance
@@ -391,9 +400,11 @@ class TestQuoteTools:
     @patch('src.vnstock_mcp.tools.quote_tools.Quote')
     def test_quote_tools_output_format_consistency(self, mock_quote_class):
         """Test output format consistency across all quote tools"""
-        # Setup mock
+        # Setup mock - must include all OHLC columns and volume for drop_market_close logic
         mock_instance = Mock()
-        mock_instance.history.return_value = pd.DataFrame([{'time': '2024-01-01', 'close': 100}])
+        mock_instance.history.return_value = pd.DataFrame([{
+            'time': '2024-01-01', 'open': 99, 'high': 101, 'low': 98, 'close': 100, 'volume': 1000
+        }])
         mock_instance.intraday.return_value = pd.DataFrame([{'time': '09:00:00', 'price': 100}])
         mock_instance.price_depth.return_value = pd.DataFrame([{'bid_price': 100}])
         mock_quote_class.return_value = mock_instance

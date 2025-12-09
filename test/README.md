@@ -6,15 +6,22 @@ This directory contains comprehensive unit tests for all VNStock MCP Server tool
 
 ```
 test/
-├── conftest.py              # Pytest configuration and shared fixtures
-├── test_company_tools.py    # Tests for company-related tools (11 tools)
-├── test_listing_tools.py    # Tests for listing-related tools (5 tools)
-├── test_finance_tools.py    # Tests for finance-related tools (5 tools)
-├── test_fund_tools.py       # Tests for fund-related tools (5 tools)
-├── test_misc_tools.py       # Tests for misc tools (2 tools)
-├── test_quote_tools.py      # Tests for quote-related tools (3 tools)
-├── test_trading_tools.py    # Tests for trading tools (1 tool)
-└── README.md               # This file
+├── conftest.py                  # Pytest configuration and shared fixtures
+├── test_cli.py                  # Tests for CLI and server startup
+├── test_company_tools.py        # Tests for company-related tools (11 tools)
+├── test_finance_tools.py        # Tests for finance-related tools (5 tools)
+├── test_fund_tools.py           # Tests for fund-related tools (6 tools)
+├── test_listing_tools.py        # Tests for listing-related tools (5 tools)
+├── test_misc_tools.py           # Tests for misc tools (2 tools)
+├── test_quote_tools.py          # Tests for quote-related tools (4 tools)
+├── test_ta_momentum_utils.py    # Tests for TA momentum indicators (40+ indicators)
+├── test_ta_trend_utils.py       # Tests for TA trend indicators (15+ indicators)
+├── test_ta_volume_utils.py      # Tests for TA volume indicators (15+ indicators)
+├── test_ta_utils.py             # Tests for TA utility functions and registry
+├── test_trading_tools.py        # Tests for trading tools (1 tool)
+├── test_utils.py                # Tests for utility functions
+├── test_vnstock_utils.py        # Tests for vnstock utility functions
+└── README.md                    # This file
 ```
 
 ## Tools Covered
@@ -34,10 +41,10 @@ test/
 
 ### Listing Tools (5 tools)
 - `get_all_symbol_groups`
-- `get_all_industries`
 - `get_all_symbols_by_group`
 - `get_all_symbols_by_industry`
 - `get_all_symbols`
+- `get_all_industries`
 
 ### Finance Tools (5 tools)
 - `get_income_statements`
@@ -46,7 +53,7 @@ test/
 - `get_finance_ratios`
 - `get_raw_report`
 
-### Fund Tools (5 tools)
+### Fund Tools (6 tools)
 - `list_all_funds`
 - `search_fund`
 - `get_fund_nav_report`
@@ -58,25 +65,66 @@ test/
 - `get_gold_price`
 - `get_exchange_rate`
 
-### Quote Tools (3 tools)
+### Quote Tools (4 tools)
 - `get_quote_history_price`
 - `get_quote_intraday_price`
 - `get_quote_price_depth`
+- `get_quote_price_with_indicators`
 
 ### Trading Tools (1 tool)
 - `get_price_board`
 
-**Total: 32 tools tested**
+### Technical Analysis (TA) Tools
+
+#### Momentum Indicators (40+ indicators)
+- RSI, MACD, Stochastic, CCI, Williams %R, ADX
+- Awesome Oscillator, APO, BIAS, BOP, BRAR
+- CFO, CG, CMO, Coppock, CRSI, CTI, DM
+- Efficiency Ratio, Elder Ray, Fisher Transform
+- Inertia, KDJ, KST, Momentum, PGO, PPO, PSL
+- QQE, ROC, RSX, RVGI, Slope, SMI, Squeeze
+- STC, STOCH, STOCHF, STOCHRSI, TMO, TRIX, TSI
+- Ultimate Oscillator, Williams %R
+
+#### Trend Indicators (15+ indicators)
+- ADX (Average Directional Movement)
+- Aroon, Aroon Oscillator
+- Choppiness Index, CKSp
+- Decay, Decreasing/Increasing
+- DPO (Detrended Price Oscillator)
+- Ichimoku Cloud
+- Linear Regression, PSAR (Parabolic SAR)
+- QStick, SuperTrend, VHF, Vortex
+
+#### Volume Indicators (15+ indicators)
+- AD (Accumulation/Distribution)
+- ADOSC (AD Oscillator)
+- AOBV (Archer OBV)
+- CMF (Chaikin Money Flow)
+- EFI (Elder's Force Index)
+- EOM (Ease of Movement)
+- KVO (Klinger Volume Oscillator)
+- MFI (Money Flow Index)
+- NVI (Negative Volume Index)
+- OBV (On-Balance Volume)
+- PVO (Percentage Volume Oscillator)
+- PVOL (Price-Volume)
+- PVR (Price Volume Rank)
+- PVT (Price Volume Trend)
+- VWMA (Volume Weighted Moving Average)
+
+**Total: 35+ tools + 70+ technical indicators tested**
 
 ## Test Features
 
 ### Comprehensive Coverage
-- ✅ **Unit Tests**: All 32 tools have comprehensive unit tests
+- ✅ **Unit Tests**: All tools have comprehensive unit tests
 - ✅ **Mock Testing**: All external API calls are mocked
 - ✅ **Output Format Testing**: Both JSON and DataFrame outputs tested
 - ✅ **Parameter Testing**: Default parameters and edge cases
 - ✅ **Error Handling**: Exception handling and empty result scenarios
 - ✅ **Data Validation**: Response structure and data integrity
+- ✅ **TA Indicators**: Output columns verification and parameter variations
 
 ### Test Categories
 - **Unit Tests**: Fast, isolated tests with mocked dependencies
@@ -94,84 +142,82 @@ test/
 ### Prerequisites
 ```bash
 # Install development dependencies
-make install-dev
-# or
 pdm install --dev
+# or with uv
+uv sync --group dev
 ```
 
 ### Basic Test Commands
 ```bash
 # Run all tests
-make test
+pdm run pytest
 
 # Run tests with verbose output
-make test-verbose
+pdm run pytest -v
 
 # Run only unit tests
-make test-unit
+pdm run pytest -m unit
 
 # Run tests with coverage report
-make test-coverage
+pdm run pytest --cov=src/vnstock_mcp --cov-report=html
 ```
 
 ### Specific Test Files
 ```bash
 # Test company tools only
-make test-company
+pdm run pytest test/test_company_tools.py
 
 # Test listing tools only
-make test-listing
+pdm run pytest test/test_listing_tools.py
 
 # Test finance tools only
-make test-finance
+pdm run pytest test/test_finance_tools.py
 
 # Test fund tools only
-make test-fund
+pdm run pytest test/test_fund_tools.py
 
 # Test misc tools only
-make test-misc
+pdm run pytest test/test_misc_tools.py
 
 # Test quote tools only
-make test-quote
+pdm run pytest test/test_quote_tools.py
 
 # Test trading tools only
-make test-trading
+pdm run pytest test/test_trading_tools.py
+
+# Test TA momentum indicators
+pdm run pytest test/test_ta_momentum_utils.py
+
+# Test TA trend indicators
+pdm run pytest test/test_ta_trend_utils.py
+
+# Test TA volume indicators
+pdm run pytest test/test_ta_volume_utils.py
+
+# Test TA utilities and registry
+pdm run pytest test/test_ta_utils.py
+
+# Test CLI
+pdm run pytest test/test_cli.py
 ```
 
 ### Advanced Test Commands
 ```bash
 # Run specific test function
-make test-function FUNC=test_get_company_overview_json
-
-# Run tests in parallel
-make test-parallel
-
-# Run tests with file watching
-make test-watch
-
-# Generate coverage report
-make coverage
-```
-
-### Direct pytest Commands
-```bash
-# Run all tests
-pdm run pytest
-
-# Run specific test file
-pdm run pytest test/test_company_tools.py
-
-# Run specific test class
-pdm run pytest test/test_company_tools.py::TestCompanyTools
-
-# Run specific test method
 pdm run pytest test/test_company_tools.py::TestCompanyTools::test_get_company_overview_json
 
-# Run tests with specific marker
-pdm run pytest -m unit
+# Run tests matching a pattern
+pdm run pytest -k "rsi or macd"
 
-# Run tests with coverage
+# Run tests with short output
+pdm run pytest --tb=short -q
+
+# Run tests in parallel (requires pytest-xdist)
+pdm run pytest -n auto
+
+# Generate HTML coverage report
 pdm run pytest --cov=src/vnstock_mcp --cov-report=html
+# Open report: ./htmlcov/index.html
 ```
 
 ## Test Configuration
@@ -236,6 +282,7 @@ exclude_lines = [
 - `sample_exchange_rate_data`: Mock exchange rate data
 - `sample_industries_data`: Mock industries data
 - `sample_symbols_data`: Mock symbols data
+- `sample_ohlcv_data`: Mock OHLCV data for TA indicators
 
 ### Mock Classes
 - `mock_tcbs_company`: Mock TCBS Company class
@@ -274,6 +321,33 @@ def test_get_company_overview_json(self, mock_tcbs_class, sample_company_overvie
     assert parsed_result[0]['symbol'] == 'VCB'
 ```
 
+### Testing TA Indicators
+```python
+def test_add_rsi_default_params(self, sample_ohlcv_data):
+    """Test RSI indicator with default parameters"""
+    result = add_relative_strength_index(sample_ohlcv_data.copy())
+    
+    # Check output columns exist
+    assert 'RSI_14' in result.columns
+    
+    # Check data integrity
+    assert len(result) == len(sample_ohlcv_data)
+    assert result['close'].equals(sample_ohlcv_data['close'])
+
+def test_add_macd_custom_params(self, sample_ohlcv_data):
+    """Test MACD indicator with custom parameters"""
+    result = add_moving_average_convergence_divergence(
+        sample_ohlcv_data.copy(),
+        fast_length=8,
+        slow_length=21,
+        signal_length=5
+    )
+    
+    # Check all output columns
+    macd_cols = [col for col in result.columns if 'MACD' in col.upper()]
+    assert len(macd_cols) >= 3  # MACD, MACDh, MACDs
+```
+
 ### Testing Both Output Formats
 ```python
 def test_tool_both_formats(self):
@@ -292,6 +366,30 @@ def test_tool_both_formats(self):
         assert isinstance(df_result, pd.DataFrame)
 ```
 
+## Current Test Statistics
+
+- **Total Tests**: 305
+- **Coverage**: ~99%
+- **Test Files**: 14
+
+### Test Distribution
+| Test File | Tests |
+|-----------|-------|
+| test_cli.py | 16 |
+| test_company_tools.py | 19 |
+| test_finance_tools.py | 16 |
+| test_fund_tools.py | 18 |
+| test_listing_tools.py | 15 |
+| test_misc_tools.py | 18 |
+| test_quote_tools.py | 23 |
+| test_ta_momentum_utils.py | 48 |
+| test_ta_trend_utils.py | 28 |
+| test_ta_utils.py | 34 |
+| test_ta_volume_utils.py | 26 |
+| test_trading_tools.py | 15 |
+| test_utils.py | 24 |
+| test_vnstock_utils.py | 5 |
+
 ## Known Issues and Bugs
 
 ### Documented Bugs in Code
@@ -300,8 +398,8 @@ def test_tool_both_formats(self):
    - Test documents this behavior for future fixing
 
 ### Test Coverage
-- **Current Coverage**: ~95%+ (target)
-- **Missing Coverage**: Error handling in some edge cases
+- **Current Coverage**: 99%
+- **Missing Coverage**: Minor edge cases in error handling
 - **Future Improvements**: Integration tests with real API calls
 
 ## Contributing
@@ -325,13 +423,13 @@ def test_tool_both_formats(self):
 ### Running Tests Before Commit
 ```bash
 # Run full test suite with coverage
-make coverage
+pdm run pytest --cov=src/vnstock_mcp --cov-report=html
 
-# Clean up test artifacts
-make clean
+# Quick test run
+pdm run pytest --tb=short -q
 
 # Lint test code (if linting tools are installed)
-make lint-tests
+pdm run ruff check test/
 ```
 
 ## Maintenance

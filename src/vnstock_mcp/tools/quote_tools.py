@@ -10,7 +10,7 @@ quote_mcp = FastMCP("Quote")
 
 
 @with_output_format
-def get_quote_price_with_indicators(symbol: str, indicators: list[str], start_date: str, end_date: str = None, interval: Literal['1m', '5m', '15m', '30m', '1H', '1D', '1W', '1M'] = '1D'):
+def get_quote_price_with_indicators(symbol: str, indicators: list[str], start_date: str, end_date: str = None, interval: Literal['1m', '5m', '15m', '30m', '1H', '1D', '1W', '1M'] = '1D', drop_market_close: bool = True):
     """
     Get quote price with indicators of a symbol from stock market.
     
@@ -33,12 +33,16 @@ def get_quote_price_with_indicators(symbol: str, indicators: list[str], start_da
     """
     quote = Quote(symbol=symbol, source='VCI')
     data = quote.history(start=start_date, end=end_date or datetime.now().strftime('%Y-%m-%d'), interval=interval)
+    if drop_market_close:
+        # Remove rows where all OHLC columns are null AND volume = 0
+        ohlc_cols = ['open', 'high', 'low', 'close']
+        data = data[~((data[ohlc_cols].isna().all(axis=1)) & (data['volume'] == 0))] # type: ignore
     for indicator in indicators:
         data = add_indicator(data, indicator)
     return data
 
 @with_output_format
-def get_quote_history_price(symbol: str, start_date: str, end_date: str = None, interval: Literal['1m', '5m', '15m', '30m', '1H', '1D', '1W', '1M'] = '1D'):
+def get_quote_history_price(symbol: str, start_date: str, end_date: str = None, interval: Literal['1m', '5m', '15m', '30m', '1H', '1D', '1W', '1M'] = '1D', drop_market_close: bool = True):
     """
     Get quote price history of a symbol from stock market
     Args:
@@ -50,7 +54,12 @@ def get_quote_history_price(symbol: str, start_date: str, end_date: str = None, 
         pd.DataFrame
     """
     quote = Quote(symbol=symbol, source='VCI')
-    return quote.history(start=start_date, end=end_date or datetime.now().strftime('%Y-%m-%d'), interval=interval)
+    data = quote.history(start=start_date, end=end_date or datetime.now().strftime('%Y-%m-%d'), interval=interval)
+    if drop_market_close:
+        # Remove rows where all OHLC columns are null AND volume = 0
+        ohlc_cols = ['open', 'high', 'low', 'close']
+        data = data[~((data[ohlc_cols].isna().all(axis=1)) & (data['volume'] == 0))] # type: ignore
+    return data
 
 
 @with_output_format

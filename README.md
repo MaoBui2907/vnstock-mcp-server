@@ -336,7 +336,17 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Changelog
 
-### v1.0.3 (Latest)
+### v1.0.4 (Latest)
+- **NEW**: Added Technical Analysis (TA) Trend Indicators - 15+ trend indicators including ADX, Aroon, Ichimoku, Parabolic SAR, SuperTrend, PSAR, and more
+- **NEW**: Added Technical Analysis (TA) Volume Indicators - 15+ volume indicators including OBV, AD, CMF, MFI, VWMA, and more
+- **NEW**: Modular TA architecture with separate modules for Momentum, Trend, and Volume indicators
+- **NEW**: Core utility functions in `ta_core.py` for indicator metadata extraction and result merging
+- **IMPROVED**: Comprehensive docstrings with accurate `Output columns` documentation for all indicators
+- **IMPROVED**: Unified indicator registry combining all indicator categories
+- **IMPROVED**: Better test coverage with separate test files for each indicator category
+- **FIXED**: Fixed test failures in quote tools related to OHLCV data requirements
+
+### v1.0.3
 - **NEW**: Added Technical Analysis (TA) Momentum Indicators support via `pandas-ta` library
 - **NEW**: 40+ momentum indicators including RSI, MACD, Stochastic, CCI, Williams %R, ADX, and more
 - **NEW**: `add_indicator()` function for dynamic indicator addition with string parsing
